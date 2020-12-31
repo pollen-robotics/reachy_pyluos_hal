@@ -144,3 +144,14 @@ class JointPyluos(JointABC):
         for name, comp in compliances.items():
             self.name2mod[name].compliant = comp
         return True
+
+    def get_grip_force(self, sides: List[str]) -> List[float]:
+        forces = []
+
+        for side in sides:
+            if side == 'left':
+                forces.append(self.reachy.left_arm.hand.grip_force)
+            elif side == 'right':
+                forces.append(self.reachy.right_arm.hand.grip_force)
+
+        return forces
