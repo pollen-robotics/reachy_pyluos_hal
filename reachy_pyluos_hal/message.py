@@ -6,6 +6,9 @@ from collections import namedtuple
 class MsgType:
     MSG_TYPE_DXL_GET_REG = 10  # [MSG_TYPE_DXL_GET_REG, DXL_ID, DXL_REG, NB_BYTES]
     MSG_TYPE_DXL_SET_REG = 11  # [MSG_TYPE_DXL_SET_REG, DXL_ID, DXL_REG, (VAL)+]
+    # Only support 1 or 2 reg length
+    MSG_TYPE_DXL_SET_MULTIPLE_REG = 12  # [MSG_TYPE_DXL_SET_MULTIPLE_REG, DXL_REG, NB_BYTES, (DXL_ID, VAL_L, (VAL_H))+]
+
     # From Dxl --> PC
     MSG_TYPE_DXL_PUB_DATA = 15  # [MSG_TYPE_DXL_PUB_DATA, DXL_ID, DXL_REG, ERR1, ERR2, (VAL)+]
 

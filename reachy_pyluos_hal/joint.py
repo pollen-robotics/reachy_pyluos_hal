@@ -88,8 +88,28 @@ class JointPyluos(JointABC):
         ]
 
     def set_goal_positions(self, goal_positions: Dict[str, float]) -> None:
+        from reachy_pyluos_hal.message import Message, MsgType
+        from reachy_pyluos_hal.dynamixel import DXL_REGISTER
+        from reachy_pyluos_hal.dxl_convert import as_bytes
+
+        reg, nb_bytes, _, cvt = DXL_REGISTER['goal_position']
+        left_arm_payload = [MsgType.MSG_TYPE_DXL_SET_MULTIPLE_REG, reg, nb_bytes]
+        right_arm_payload = [MsgType.MSG_TYPE_DXL_SET_MULTIPLE_REG, reg, nb_bytes]
+
         for name, pos in goal_positions.items():
-            self.name2mod[name].send_value('goal_position', pos)
+            dxl = self.name2mod[name]
+            l = [dxl.id] + as_bytes(cvt(pos, dxl.model, dxl.offset, dxl.direct), nb_bytes)
+
+            if dxl.gate == self.reachy.right_arm:
+                right_arm_payload.extend(l)
+            elif dxl.gate == self.reachy.left_arm:
+                left_arm_payload.extend(l)
+
+        if len(right_arm_payload) > 3:
+            self.reachy.right_arm.send_msg(Message(right_arm_payload))
+        if len(left_arm_payload) > 3:
+            self.reachy.left_arm.send_msg(Message(left_arm_payload))
+
 
     def get_goal_velocities(self, names: List[str]) -> List[float]:
         return [
