@@ -18,8 +18,8 @@ class JointPyluos(JointABC):
 
         # self.logger.info(f'Connecting to the robot via "{port_template}"...')
         self.reachy = Reachy(
-            left_arm_port='/dev/cu.usbserial-D307RR2J',
-            right_arm_port='/dev/cu.usbserial-DN05NM0W',
+            left_arm_port='/dev/ttyUSB0',
+            right_arm_port='/dev/ttyUSB1',
         )
         # self.reachy.run4ever()
         # self.logger.info('Connection ok!')
