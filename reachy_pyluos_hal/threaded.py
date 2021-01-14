@@ -50,7 +50,8 @@ class ReaderThread(threading.Thread):
             try:
                 if not hasattr(self, '_bob'):
                     self._bob = []
-                self._bob.append(self.serial.in_waiting)
+                import time
+                self._bob.append((self.serial.in_waiting, time.time()))
                 # read all that is there or wait for one byte (blocking)
                 data = self.serial.read(self.serial.in_waiting or 1)
             except serial.SerialException as e:
