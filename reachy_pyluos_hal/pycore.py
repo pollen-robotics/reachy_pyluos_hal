@@ -4,7 +4,9 @@ import time
 import struct
 
 from logging import Logger
-from serial.threaded import Protocol, ReaderThread
+from serial.threaded import Protocol
+
+from .threaded import ReaderThread
 
 
 class GateProtocol(Protocol):
