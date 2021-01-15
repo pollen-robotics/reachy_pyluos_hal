@@ -1,13 +1,12 @@
 """Serial communication protocol with Reachy Luos Gate."""
 
-from threading import Event, Thread
-from typing import Dict, Iterable, List, Optional, Type
-
 import sys
 import time
 import struct
 
 from logging import Logger
+from threading import Event, Thread
+from typing import Dict, Iterable, List, Optional, Type
 
 from serial import Serial
 from serial.threaded import Protocol, ReaderThread

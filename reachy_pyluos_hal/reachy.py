@@ -47,11 +47,7 @@ class Reachy(GateProtocol):
         self.gates: List[GateClient] = []
         self.gate4name: Dict[str, GateClient] = {}
         self.joints: Dict[str, Joint] = {}
-        self.dxl4id: Dict[int, DynamixelMotor] = {
-            m.id: m
-            for m in self.joints.values()
-            if isinstance(m, DynamixelMotor)
-        }
+        self.dxl4id: Dict[int, DynamixelMotor] = {}
 
         for port, devices in self.devices.items():
             self.logger.info(f'Create GateClient on="{port}" with {list(devices.keys())} attached.')
@@ -60,9 +56,10 @@ class Reachy(GateProtocol):
 
             for name, dev in devices.items():
                 self.gate4name[name] = gate
+                self.joints[name] = dev
 
                 if isinstance(dev, DynamixelMotor):
-                    self.joints[name] = dev
+                    self.dxl4id[dev.id] = dev
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -121,11 +118,11 @@ class Reachy(GateProtocol):
         for gate, value_for_id in dxl_data_per_gate.items():
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
-    def handle_dxl_pub_data(self, register: str, ids: List[int], errors: List[int], values: List[bytes]):
+    def handle_dxl_pub_data(self, addr: int, ids: List[int], errors: List[int], values: List[bytes]):
         """Handle dxl update received on a gate client."""
         for id, err, val in zip(ids, errors, values):
             assert (err == 0)
-            self.dxl4id[id].update_value(register, val)
+            self.dxl4id[id].update_value(DynamixelMotor.find_register(addr), val)
 
     def handle_assert(self, msg: str):
         """Handle an assertion received on a gate client."""

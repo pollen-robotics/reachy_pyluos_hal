@@ -23,6 +23,14 @@ class DynamixelMotor(Joint):
         self.offset = offset
         self.direct = direct
 
+    @classmethod
+    def find_register(cls, addr: int) -> str:
+        """Find register name by its address."""
+        for reg, (reg_addr, _) in cls.register_config.items():
+            if reg_addr == addr:
+                return reg
+        raise KeyError(addr)
+
     def convert_to_raw(self, register: str, value: float) -> bytes:
         """Convert a raw value to its USI value."""
         if register == 'torque_enable':

@@ -1,7 +1,6 @@
 """Implementation of the joint reachy_ros_hal via serial communication to the luos board."""
 
 from typing import Dict, List, Optional
-
 from logging import Logger
 
 from reachy_ros_hal.joint import JointABC
