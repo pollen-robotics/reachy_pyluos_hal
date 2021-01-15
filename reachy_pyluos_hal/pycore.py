@@ -9,6 +9,7 @@ from serial.threaded import Protocol, ReaderThread
 
 class GateProtocol(Protocol):
     MSG_TYPE_DXL_GET_REG = 10
+    MSG_TYPE_DXL_SET_REG = 11
     MSG_TYPE_PUB_DATA = 15
     MSG_TYPE_KEEP_ALIVE = 200
     MSG_MODULE_ASSERT = 222
@@ -25,8 +26,7 @@ class GateProtocol(Protocol):
         self.transport = transport
 
     def connection_lost(self, exc):
-        print('Connection lost')
-        if exc is not None:
+        if isinstance(exc, Exception):
             raise exc
 
     def data_received(self, data):
@@ -51,6 +51,15 @@ class GateProtocol(Protocol):
 
     def send_keep_alive(self):
         self.send_msg(bytes([self.MSG_TYPE_KEEP_ALIVE]))
+
+    def send_dxl_get(self, register, num_bytes, ids):
+        self.send_msg(bytes([self.MSG_TYPE_DXL_GET_REG, register, num_bytes] + ids))
+
+    def send_dxl_set(self, register, num_bytes, value_for_id):
+        msg = [self.MSG_TYPE_DXL_SET_REG, register, num_bytes]
+        for id, val in value_for_id.items():
+            msg += [id] + val
+        self.send_msg(bytes(msg))
 
     def pop_messages(self) -> Iterable[bytearray]:
         msgs = self.buffer.split(self.header)
