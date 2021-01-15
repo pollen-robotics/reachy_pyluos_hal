@@ -4,20 +4,16 @@ import time
 import struct
 
 from logging import Logger
-from serial.threaded import Protocol
-
-from .threaded import ReaderThread
+from serial.threaded import Protocol, ReaderThread
 
 
 class GateProtocol(Protocol):
     MSG_TYPE_DXL_GET_REG = 10
     MSG_TYPE_PUB_DATA = 15
-
     MSG_TYPE_KEEP_ALIVE = 200
     MSG_MODULE_ASSERT = 222
 
     logger: Optional[Logger] = None
-
     header = bytes([255, 255])
 
     def __init__(self) -> None:
