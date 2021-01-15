@@ -55,13 +55,7 @@ class ReaderThread(threading.Thread):
                 import time
                 self._bob.append((self.serial.in_waiting, time.time()))
                 # read all that is there or wait for one byte (blocking)
-                # data = self.serial.read(self.serial.in_waiting or 1)
-                data = self.serial.read(self.lll)
-
-                if self.lll == 3:
-                    self.lll = data[2]
-                else:
-                    self.lll = 3
+                data = self.serial.read(self.serial.in_waiting or 1)
 
             except serial.SerialException as e:
                 # probably some I/O problem such as disconnected USB serial
