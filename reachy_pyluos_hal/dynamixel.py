@@ -132,7 +132,7 @@ class DynamixelMotor(Joint):
 
     def temperature_to_usi(self, value: bytes) -> float:
         """Convert temperature to usi (in C)."""
-        return value[0]
+        return float(value[0])
 
 
 class MX(DynamixelMotor):
