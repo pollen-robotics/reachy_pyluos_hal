@@ -87,6 +87,7 @@ class DynamixelMotor(Joint):
 
     def position_to_raw(self, value: float) -> bytes:
         """Convert position (in rad) to raw."""
+        value = (value + self.offset) * (1 if self.direct else -1)
         pos_ratio = (value + self.max_radian / 2) / self.max_radian
         dxl_raw_pos = int(round(pos_ratio * (self.max_position - 1), 0))
         return pack('H', dxl_raw_pos)
@@ -95,7 +96,8 @@ class DynamixelMotor(Joint):
         """Convert position to usi (in rad)."""
         dxl_raw_pos = unpack('H', value)[0]
         pos_ratio = dxl_raw_pos / (self.max_position - 1)
-        return (pos_ratio * self.max_radian) - self.max_radian / 2
+        pos = (pos_ratio * self.max_radian) - self.max_radian / 2
+        return (pos if self.direct else -pos) - self.offset
 
     def speed_to_raw(self, value: float) -> bytes:
         """Convert speed (in rad/s) to raw."""
@@ -144,7 +146,7 @@ class MX(DynamixelMotor):
     @property
     def max_radian(self) -> float:
         """Return the max position (in rad)."""
-        return deg2rad(260)
+        return deg2rad(360)
 
 
 class AX18(DynamixelMotor):
@@ -161,4 +163,4 @@ class AX18(DynamixelMotor):
         return deg2rad(300)
 
 
-MX106 = MX64 = MX
+MX106 = MX64 = MX28 = MX
