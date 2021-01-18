@@ -4,10 +4,9 @@ It can be any DynamixelMotor or an OrbitaMotor.
 """
 
 from abc import ABC
-from typing import List, Optional
-from threading import Event
+from typing import List
 
-import time
+from .register import Register
 
 
 class Joint(ABC):
@@ -55,33 +54,3 @@ class Joint(ABC):
         """Convert a USI value to its raw representation."""
         ...
 
-
-class Register:
-    """Synced register object."""
-
-    def __init__(self) -> None:
-        """Set up the register with a None value by default."""
-        self.val: Optional[bytes] = None
-        self.timestamp = 0.0
-        self.synced = Event()
-
-    def is_set(self) -> bool:
-        """Check if the register has been set since last reset."""
-        return self.synced.is_set()
-
-    def update(self, val):
-        """Update the register with a value retrieve from its associated gate."""
-        self.val = val
-        self.timestamp = time.time()
-        self.synced.set()
-
-    def get(self) -> bytes:
-        """Wait for an updated value and returns it."""
-        self.synced.wait()
-        assert self.val is not None
-        return self.val
-
-    def reset(self):
-        """Mark the value as obsolete."""
-        self.synced.clear()
-        self.val = None

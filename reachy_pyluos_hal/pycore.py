@@ -18,6 +18,7 @@ class GateProtocol(Protocol):
     MSG_TYPE_DXL_GET_REG = 10
     MSG_TYPE_DXL_SET_REG = 11
     MSG_TYPE_PUB_DATA = 15
+    MSG_TYPE_LOAD_PUB_DATA = 20
     MSG_TYPE_KEEP_ALIVE = 200
     MSG_MODULE_ASSERT = 222
 
@@ -111,7 +112,7 @@ class GateProtocol(Protocol):
         if payload[0] == self.MSG_MODULE_ASSERT:
             self.handle_assert(payload[1:].decode())
 
-        if payload[0] == self.MSG_TYPE_PUB_DATA:
+        elif payload[0] == self.MSG_TYPE_PUB_DATA:
             register = payload[1]
             val_size = payload[2]
             size_per_id = 1 + 2 + val_size
@@ -128,8 +129,24 @@ class GateProtocol(Protocol):
 
             self.handle_dxl_pub_data(register, ids, errors, values)
 
+        elif payload[0] == self.MSG_TYPE_LOAD_PUB_DATA:
+            nb_sensors = (len(payload) - 1) // 5
+            ids, loads = [], []
+            for i in range(nb_sensors):
+                ids.append(payload[5 * i + 1])
+                loads.append(struct.unpack('<f', payload[5 * i + 2: 5 * i + 6])[0])
+            self.handle_load_pub_data(ids, loads)
+        
+        else:
+            if self.logger is not None:
+                self.logger.warning(f'Got unrecognized message {list(payload)}')
+
     def handle_dxl_pub_data(self, register: int, ids: List[int], errors: List[int], values: List[bytes]):
         """Handle dxl update received on a gate client."""
+        raise NotImplementedError
+
+    def handle_load_pub_data(self, ids: List[int], values: List[float]):
+        """Handle load update received on a gate client."""
         raise NotImplementedError
 
     def handle_assert(self, msg: str):

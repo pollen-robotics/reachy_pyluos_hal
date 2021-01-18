@@ -77,4 +77,6 @@ class JointLuos(JointABC):
 
     def get_grip_force(self, sides: List[str]) -> List[float]:
         """Return the current forces of the specified grip sensors."""
-        return [42.0 for _ in sides]
+        sides = ['r' if side == 'right' else 'l' for side in sides]
+        force_sensors = [self.reachy.force_sensors[f'{side}_force_gripper'] for side in sides]
+        return [sensor.get_force() for sensor in force_sensors]
