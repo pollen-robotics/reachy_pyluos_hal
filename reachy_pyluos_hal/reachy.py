@@ -18,7 +18,7 @@ class Reachy(GateProtocol):
     """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
 
     devices: Dict[str, Dict[str, Union[Joint, ForceSensor]]] = OrderedDict([
-        ('/dev/tty.usbserial-DN05NM0W', OrderedDict([
+        ('/dev/ttyUSB0', OrderedDict([
             ('r_shoulder_pitch', MX106(id=10, offset=np.pi/2, direct=False)),
             ('r_shoulder_roll', MX64(id=11, offset=np.pi/2, direct=False)),
             ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
@@ -29,16 +29,17 @@ class Reachy(GateProtocol):
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
             ('r_force_gripper', ForceSensor(id=10)),
         ])),
-        # ('/dev/ttyUSB1', OrderedDict([
-        #     ('l_shoulder_pitch', MX106(id=20, offset=np.pi/2, direct=True)),
-        #     ('l_shoulder_roll', MX64(id=21, offset=-np.pi/2, direct=False)),
-        #     ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
-        #     ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
-        #     ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
-        #     ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
-        #     ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
-        #     ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
-        # ])),
+        ('/dev/ttyUSB1', OrderedDict([
+            ('l_shoulder_pitch', MX106(id=20, offset=np.pi/2, direct=True)),
+            ('l_shoulder_roll', MX64(id=21, offset=-np.pi/2, direct=False)),
+            ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
+            ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
+            ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
+            ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
+            ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
+            ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
+            ('l_force_gripper', ForceSensor(id=10)),
+        ])),
     ])
 
     def __init__(self, logger: Logger) -> None:
