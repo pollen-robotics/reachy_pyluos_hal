@@ -23,6 +23,8 @@ class DynamixelMotor(Joint):
 
     def __init__(self, id: int, offset: float, direct: bool) -> None:
         """Set up the dynamixel motor with its id, and an offset and direction."""
+        super().__init__()
+
         self.id = id
         self.offset = offset
         self.direct = direct
@@ -86,7 +88,7 @@ class DynamixelMotor(Joint):
     def position_to_raw(self, value: float) -> bytes:
         """Convert position (in rad) to raw."""
         pos_ratio = (value + self.max_radian / 2) / self.max_radian
-        dxl_raw_pos = pos_ratio * (self.max_position - 1)
+        dxl_raw_pos = int(round(pos_ratio * (self.max_position - 1), 0))
         return pack('H', dxl_raw_pos)
 
     def position_to_usi(self, value: bytes) -> float:

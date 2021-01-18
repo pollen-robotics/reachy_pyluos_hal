@@ -14,7 +14,7 @@ from .dynamixel import DynamixelMotor, MX106, MX64, AX18
 class Reachy(GateProtocol):
     """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
 
-    devices = OrderedDict([
+    devices: Dict[str, Dict[str, Joint]] = OrderedDict([
         ('/dev/tty.usbserial-DN05NM0W', OrderedDict([
             ('r_shoulder_pitch', MX106(id=10, offset=90.0, direct=False)),
             ('r_shoulder_roll', MX64(id=11, offset=90.0, direct=False)),
@@ -71,7 +71,7 @@ class Reachy(GateProtocol):
         for gate in self.gates:
             gate.stop()
 
-    def get_joints_value(self, register: str, joint_names: List[str]) -> List[float]:
+    def get_joints_value(self, register: str, joint_names: List[str], clear_value: bool) -> List[float]:
         """Retrieve register value on the specified joints.
 
         The process is done as follows.
@@ -82,11 +82,13 @@ class Reachy(GateProtocol):
         dxl_ids_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
         for name in joint_names:
             joint = self.joints[name]
-            joint.clear_value(register)
+            if clear_value:
+                joint.clear_value(register)
 
-            if isinstance(joint, DynamixelMotor):
-                gate = self.gate4name[name]
-                dxl_ids_per_gate[gate].append(joint.id)
+            if clear_value or (not joint.is_value_set(register)):
+                if isinstance(joint, DynamixelMotor):
+                    gate = self.gate4name[name]
+                    dxl_ids_per_gate[gate].append(joint.id)
 
         addr, num_bytes = DynamixelMotor.register_config[register]
         for gate, ids in dxl_ids_per_gate.items():
@@ -111,17 +113,32 @@ class Reachy(GateProtocol):
             joint = self.joints[name]
 
             if isinstance(joint, DynamixelMotor):
-                gate = self.gate4name[name]
-                dxl_data_per_gate[gate][joint.id] = joint.convert_to_raw(register, value)
+                dxl_raw_value = joint.convert_to_raw(register, value)
+
+                if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
+                    gate = self.gate4name[name]
+                    dxl_data_per_gate[gate][joint.id] = dxl_raw_value
+
+                self.dxl4id[joint.id].update_value(register, dxl_raw_value)
 
         addr, num_bytes = DynamixelMotor.register_config[register]
         for gate, value_for_id in dxl_data_per_gate.items():
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
+        if register == 'torque_enable':
+            names = list(values_for_joints.keys())
+            cached_speed = dict(zip(names, self.get_joints_value('moving_speed', names, clear_value=False)))
+            self.set_joints_value('moving_speed', cached_speed)
+            self.get_joints_value('goal_position', names, clear_value=True)
+
+    def _is_torque_enable(self, name: str) -> bool:
+        return self.get_joints_value('torque_enable', [name], clear_value=False)[0] == 1
+
     def handle_dxl_pub_data(self, addr: int, ids: List[int], errors: List[int], values: List[bytes]):
         """Handle dxl update received on a gate client."""
         for id, err, val in zip(ids, errors, values):
-            assert (err == 0)
+            if (err != 0) and self.logger is not None:
+                self.logger.warning(f'Dynamixel error {err} on motor id={id}!')
             self.dxl4id[id].update_value(DynamixelMotor.find_register(addr), val)
 
     def handle_assert(self, msg: str):

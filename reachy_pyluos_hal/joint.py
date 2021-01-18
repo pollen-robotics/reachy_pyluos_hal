@@ -31,12 +31,12 @@ class Joint(ABC):
             'present_temperature',
         ]
 
+    def is_value_set(self, register: str) -> bool:
+        """Check if the register has been set since last reset."""
+        return self.registers[register].is_set()
+
     def clear_value(self, register: str):
         """Clear the specified value, meaning its value should be make obsolete."""
-        if register in ('present_position', 'present_temperature'):
-            # Those two registers are automatically sent at a pre-defined freq.
-            # So the value should never be obsolete
-            return
         self.registers[register].reset()
 
     def get_value(self, register: str) -> bytes:
@@ -64,6 +64,10 @@ class Register:
         self.val: Optional[bytes] = None
         self.timestamp = 0.0
         self.synced = Event()
+
+    def is_set(self) -> bool:
+        """Check if the register has been set since last reset."""
+        return self.synced.is_set()
 
     def update(self, val):
         """Update the register with a value retrieve from its associated gate."""
