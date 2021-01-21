@@ -6,6 +6,10 @@ class ForceSensor:
         self.id = id
         self.force = Register()
 
+    def __repr__(self) -> str:
+        """Represent force sensor."""
+        return f'<ForceSensor id={self.id}>'
+
     def update_force(self, force: float):
         self.force.update(force)
 

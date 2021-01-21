@@ -5,11 +5,15 @@ import time
 import struct
 
 from logging import Logger
+from collections import defaultdict, namedtuple
 from threading import Event, Thread
-from typing import Dict, Iterable, List, Optional, Type
+from typing import Dict, Iterable, List, Optional, Type, Tuple
 
 from serial import Serial
 from serial.threaded import Protocol, ReaderThread
+
+
+LuosContainer = namedtuple('LuosContainer', ('id', 'alias', 'type'))
 
 
 class GateProtocol(Protocol):
@@ -20,6 +24,12 @@ class GateProtocol(Protocol):
     MSG_TYPE_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
     MSG_TYPE_KEEP_ALIVE = 200
+    MSG_DETECTION_GET_NODES = 210
+    MSG_DETECTION_GET_CONTAINERS = 211
+    MSG_DETECTION_GET_CONTAINER_INFO = 212
+    MSG_DETECTION_PUB_NODES = 215
+    MSG_DETECTION_PUB_CONTAINERS = 216
+    MSG_DETECTION_PUB_CONTAINER_INFO = 217
     MSG_MODULE_ASSERT = 222
 
     logger: Optional[Logger] = None
@@ -29,6 +39,9 @@ class GateProtocol(Protocol):
         """Prepare the input buffer."""
         self.transport: Optional[ReaderThread] = None
         self.buffer = bytearray()
+
+        self._nodes: Dict[int, List[int]] = {}
+        self._containers: Dict[int, Tuple[str, str]] = {}
 
     def connection_made(self, transport: ReaderThread):
         """Handle connection made."""
@@ -64,6 +77,25 @@ class GateProtocol(Protocol):
             self.logger.debug(f'Sending {list(data)}')
         self.transport.write(data)
         self.last_send = time.time()
+
+    def send_detection_signal(self) -> Dict[int, List[LuosContainer]]:
+        """Send request to the gate to retrieve all nodes/containers info."""
+        self._waiting_for_nodes = Event()
+        self.send_msg(bytes([self.MSG_DETECTION_GET_NODES]))
+
+        self._waiting_for_nodes.wait()
+        for id, evt in self._waiting_for_containers.items():
+            evt.wait()
+
+        devices = defaultdict(list)
+
+        for id, (alias, type) in self._containers.items():
+            for node_id, containers in self._nodes.items():
+                if id in containers:
+                    devices[node_id].append(LuosContainer(id, alias, type))
+                    break
+
+        return dict(devices)
 
     def send_keep_alive(self):
         """Send keep alive message [MSG_TYPE_KEEP_ALIVE]."""
@@ -136,7 +168,35 @@ class GateProtocol(Protocol):
                 ids.append(payload[5 * i + 1])
                 loads.append(struct.unpack('<f', payload[5 * i + 2: 5 * i + 6])[0])
             self.handle_load_pub_data(ids, loads)
-        
+
+        elif payload[0] == self.MSG_DETECTION_PUB_NODES:
+            self._nodes.clear()
+            self._containers.clear()
+
+            self._numbers_of_nodes_waiting = len(payload) - 1
+            self._waiting_for_containers = {}
+
+            for node_id in payload[1:]:
+                self._nodes[node_id] = []
+                self.send_msg(payload=bytes([self.MSG_DETECTION_GET_CONTAINERS, node_id]))
+
+        elif payload[0] == self.MSG_DETECTION_PUB_CONTAINERS:
+            node_id = payload[1]
+            for container_id in payload[2:]:
+                self._nodes[node_id].append(container_id)
+                self.send_msg(bytes([self.MSG_DETECTION_GET_CONTAINER_INFO, container_id]))
+                self._waiting_for_containers[container_id] = Event()
+
+            self._numbers_of_nodes_waiting -= 1
+            if self._numbers_of_nodes_waiting == 0:
+                self._waiting_for_nodes.set()
+
+        elif payload[0] == self.MSG_DETECTION_PUB_CONTAINER_INFO:
+            container_id = payload[1]
+            alias, type = payload[2:].decode().split(' ')
+            self._containers[container_id] = (alias, type)
+            self._waiting_for_containers[container_id].set()
+
         else:
             if self.logger is not None:
                 self.logger.warning(f'Got unrecognized message {list(payload)}')

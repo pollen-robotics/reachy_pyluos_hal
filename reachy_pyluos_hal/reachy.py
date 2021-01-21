@@ -2,23 +2,26 @@
 
 import numpy as np
 
-from typing import Dict, List, Union
+from typing import Dict, List
 from logging import Logger
+from glob import glob
 
 from threading import Lock
 from collections import OrderedDict, defaultdict
 
-from .joint import Joint
-from .force_sensor import ForceSensor
-from .pycore import GateClient, GateProtocol
+from .device import Device
+from .discovery import find_gate
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18
+from .force_sensor import ForceSensor
+from .joint import Joint
+from .pycore import GateClient, GateProtocol
 
 
 class Reachy(GateProtocol):
     """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
 
-    devices: Dict[str, Dict[str, Union[Joint, ForceSensor]]] = OrderedDict([
-        ('/dev/ttyUSB0', OrderedDict([
+    devices: List[Dict[str, Device]] = [
+        OrderedDict([
             ('r_shoulder_pitch', MX106(id=10, offset=np.pi/2, direct=False)),
             ('r_shoulder_roll', MX64(id=11, offset=np.pi/2, direct=False)),
             ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
@@ -28,8 +31,8 @@ class Reachy(GateProtocol):
             ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
             ('r_force_gripper', ForceSensor(id=10)),
-        ])),
-        ('/dev/ttyUSB1', OrderedDict([
+        ]),
+        OrderedDict([
             ('l_shoulder_pitch', MX106(id=20, offset=np.pi/2, direct=True)),
             ('l_shoulder_roll', MX64(id=21, offset=-np.pi/2, direct=False)),
             ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
@@ -38,9 +41,10 @@ class Reachy(GateProtocol):
             ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
             ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
             ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
-            ('l_force_gripper', ForceSensor(id=10)),
-        ])),
-    ])
+            ('l_force_gripper', ForceSensor(id=20)),
+        ]),
+    ]
+    ports: List[str] = glob('/dev/tty.usb*')
 
     def __init__(self, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
@@ -69,8 +73,14 @@ class Reachy(GateProtocol):
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
 
-        for port, devices in self.devices.items():
-            self.logger.info(f'Create GateClient on="{port}" with {list(devices.keys())} attached.')
+        for devices in self.devices:
+            self.logger.info(f'Looking for {list(devices.keys())} on {self.ports}.')
+            port, matching, missing = find_gate(devices, self.ports)
+            if len(missing) > 0:
+                raise IOError(f'Could not find given devices {missing}!')
+
+            self.logger.info(f'Found devices on="{port}", connecting...')
+
             gate = GateClient(port=port, protocol_factory=GateProtocolDelegate)
             self.gates.append(gate)
 

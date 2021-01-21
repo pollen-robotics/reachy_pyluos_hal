@@ -29,6 +29,10 @@ class DynamixelMotor(Joint):
         self.offset = offset
         self.direct = direct
 
+    def __repr__(self) -> str:
+        """Represent DynamixelMotor."""
+        return f'<DynamixelMotor type="{self.motor_type}" id={self.id}>'
+
     @abstractproperty
     def max_position(self) -> int:
         """Return the max position dynamixel register value."""
@@ -37,6 +41,11 @@ class DynamixelMotor(Joint):
     @abstractproperty
     def max_radian(self) -> float:
         """Return the max position (in rad)."""
+        ...
+
+    @abstractproperty
+    def motor_type(self) -> str:
+        """Return the motor type."""
         ...
 
     @classmethod
@@ -162,5 +171,34 @@ class AX18(DynamixelMotor):
         """Return the max position (in rad)."""
         return deg2rad(300)
 
+    @property
+    def motor_type(self):
+        """Return the motor type."""
+        return 'AX18'
 
-MX106 = MX64 = MX28 = MX
+
+class MX106(MX):
+    """MX106 impl."""
+
+    @property
+    def motor_type(self):
+        """Return the motor type."""
+        return 'MX106'
+
+
+class MX64(MX):
+    """MX64 impl."""
+
+    @property
+    def motor_type(self):
+        """Return the motor type."""
+        return 'MX64'
+
+
+class MX28(MX):
+    """MX28 impl."""
+
+    @property
+    def motor_type(self):
+        """Return the motor type."""
+        return 'MX28'
