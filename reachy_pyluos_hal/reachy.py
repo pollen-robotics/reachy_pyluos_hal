@@ -44,7 +44,7 @@ class Reachy(GateProtocol):
             ('l_force_gripper', ForceSensor(id=20)),
         ]),
     ]
-    ports: List[str] = glob('/dev/tty.usb*')
+    ports: List[str] = glob('/dev/ttyUSB*')
 
     def __init__(self, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
