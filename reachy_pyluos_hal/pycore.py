@@ -58,9 +58,8 @@ class GateProtocol(Protocol):
         """Handle new received data."""
         self.buffer.extend(data)
 
-        if len(self.buffer) > len(self.header) + 1:
-            for msg in self.pop_messages():
-                self.handle_message(msg)
+        for msg in self.pop_messages():
+            self.handle_message(msg)
 
     def send_msg(self, payload: bytes):
         """Send message with specified payload."""
@@ -114,32 +113,33 @@ class GateProtocol(Protocol):
 
     def pop_messages(self) -> Iterable[bytearray]:
         """Parse buffer and check for complete messages."""
-        msgs = self.buffer.split(self.header)
+        msgs = []
 
-        if len(msgs) == 1:
-            return []
+        while True:
+            if len(self.buffer) < 3:
+                break
+            assert self.buffer[0] == self.buffer[1] == 255
 
-        msgs = msgs[1:]
-        last_msg = msgs[-1]
+            payload_size = self.buffer[2]
+            if len(self.buffer) < 3 + payload_size:
+                break
 
-        if self.check_msg(last_msg):
-            self.buffer.clear()
-            return msgs
+            msg = self.buffer[3: 3 + payload_size]
+            msgs.append(msg)
 
-        self.buffer = self.buffer[-(len(last_msg) + len(self.header) + 1):]
-        return msgs[:-1]
+            self.buffer = self.buffer[3 + payload_size:]
+
+        return msgs
 
     def check_msg(self, msg: bytes) -> bool:
         """Check if the msg is complete."""
         s = len(msg)
         return s > 1 and msg[0] + 1 == s
 
-    def handle_message(self, msg: bytes):
+    def handle_message(self, payload: bytes):
         """Handle the reception of a complete message."""
         if self.logger is not None:
-            self.logger.info(f'Got msg {list(msg)}')
-        assert msg[0] == len(msg) - 1
-        payload = msg[1:]
+            self.logger.info(f'Got msg {list(payload)}')
 
         if payload[0] == self.MSG_MODULE_ASSERT:
             self.handle_assert(payload[1:].decode())
