@@ -2,7 +2,6 @@
 
 import time
 
-from typing import Optional
 from threading import Event
 
 
