@@ -1,5 +1,6 @@
 """Serial communication protocol with Reachy Luos Gate."""
 
+from reachy_pyluos_hal.orbita import OrbitaRegister
 import sys
 import time
 import struct
@@ -23,6 +24,9 @@ class GateProtocol(Protocol):
     MSG_TYPE_DXL_SET_REG = 11
     MSG_TYPE_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
+    MSG_TYPE_ORBITA_GET_REG = 50
+    MSG_TYPE_ORBITA_SET_REG = 51
+    MSG_TYPE_ORBITA_PUB_DATA = 55
     MSG_TYPE_KEEP_ALIVE = 200
     MSG_DETECTION_GET_NODES = 210
     MSG_DETECTION_GET_CONTAINERS = 211
@@ -111,6 +115,17 @@ class GateProtocol(Protocol):
             msg += [id] + list(val)
         self.send_msg(bytes(msg))
 
+    def send_orbita_get(self, orbita_id: int, register: int):
+        """Send an orbita get message [MSG_TYPE_ORBITA_GET_REG, ORBITA_ID, REG_TYPE]."""
+        self.send_msg(bytes([self.MSG_TYPE_ORBITA_GET_REG, orbita_id, register]))
+
+    def send_orbita_set(self, orbita_id: int, register: int, value_for_id: Dict[int, bytes]):
+        """Send an orbita set message [MSG_TYPE_ORBITA_SET_REG, ORBITA_ID, REG_TYPE, (MOTOR_ID, (VAL+))+]."""
+        msg = [self.MSG_TYPE_ORBITA_SET_REG, orbita_id, register]
+        for motor_id, value in value_for_id.items():
+            msg += [motor_id] + list(value)
+        self.send_msg(bytes(msg))
+
     def pop_messages(self) -> Iterable[bytearray]:
         """Parse buffer and check for complete messages."""
         msgs = []
@@ -169,6 +184,11 @@ class GateProtocol(Protocol):
                 loads.append(struct.unpack('<f', payload[5 * i + 2: 5 * i + 6])[0])
             self.handle_load_pub_data(ids, loads)
 
+        elif payload[0] == self.MSG_TYPE_ORBITA_PUB_DATA:
+            orbita_id = payload[1]
+            reg_type = payload[2]
+            self.handle_orbita_pub_data(orbita_id, OrbitaRegister(reg_type), payload[3:])
+
         elif payload[0] == self.MSG_DETECTION_PUB_NODES:
             self._nodes.clear()
             self._containers.clear()
@@ -207,6 +227,10 @@ class GateProtocol(Protocol):
 
     def handle_load_pub_data(self, ids: List[int], values: List[float]):
         """Handle load update received on a gate client."""
+        raise NotImplementedError
+
+    def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
+        """Handle orbita update received on a gate client."""
         raise NotImplementedError
 
     def handle_assert(self, msg: str):

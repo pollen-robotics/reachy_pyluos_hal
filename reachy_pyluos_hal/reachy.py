@@ -14,6 +14,7 @@ from .discovery import find_gate
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18
 from .force_sensor import ForceSensor
 from .joint import Joint
+from .orbita import OrbitaActuator, OrbitaRegister
 from .pycore import GateClient, GateProtocol
 
 
@@ -44,7 +45,7 @@ class Reachy(GateProtocol):
             ('l_force_gripper', ForceSensor(id=20)),
         ]),
     ]
-    ports: List[str] = glob('/dev/ttyUSB*')
+    ports: List[str] = glob('/dev/tty.usb*')
 
     def __init__(self, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
@@ -61,6 +62,10 @@ class Reachy(GateProtocol):
                 with _self.lock:
                     return self.handle_load_pub_data(ids, values)
 
+            def handle_orbita_pub_data(_self, id: int, register: OrbitaRegister, values: bytes):
+                with _self.lock:
+                    return self.handle_orbita_pub_data(id, register, values)
+
             def handle_assert(_self, msg: str):
                 with _self.lock:
                     return self.handle_assert(msg)
@@ -69,6 +74,8 @@ class Reachy(GateProtocol):
         self.gate4name: Dict[str, GateClient] = {}
         self.joints: Dict[str, Joint] = {}
         self.dxl4id: Dict[int, DynamixelMotor] = {}
+
+        self.orbita4id: Dict[int, OrbitaActuator] = {}
 
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
@@ -93,6 +100,8 @@ class Reachy(GateProtocol):
                 if isinstance(dev, ForceSensor):
                     self.force_sensors[name] = dev
                     self.force4id[dev.id] = dev
+                if isinstance(dev, OrbitaActuator):
+                    self.orbita4id[dev.id] = dev
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -178,6 +187,10 @@ class Reachy(GateProtocol):
         """Handle load update received on a gate client."""
         for id, val in zip(ids, values):
             self.force4id[id].update_force(val)
+
+    def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
+        """Handle orbita update received on a gate client."""
+        self.orbita4id[orbita_id].update_value(reg_type, values)
 
     def handle_assert(self, msg: str):
         """Handle an assertion received on a gate client."""
