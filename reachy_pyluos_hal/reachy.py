@@ -196,6 +196,21 @@ class Reachy(GateProtocol):
 
         return orbita.get_value_as_usi(register)
 
+    def set_orbita_values(self, register_name: str, orbita_name: str, value_for_disks: Dict[str, float]):
+        """Set new value for register on the specified disks."""
+        orbita = self.orbitas[orbita_name]
+        register = OrbitaActuator.register_address[register_name]
+        gate = self.gate4name[orbita_name]
+
+        for disk_name, value in value_for_disks.items():
+            attrgetter(f'{disk_name}.{register_name}')(orbita).update_using_usi(value)
+
+        value_for_id = {
+            orbita.get_id_for_disk(disk_name): attrgetter(f'{disk_name}.{register_name}')(orbita).get()
+            for disk_name in value_for_disks.keys()
+        }
+        gate.protocol.send_orbita_set(orbita.id, register.value, value_for_id)
+
     def _is_torque_enable(self, name: str) -> bool:
         return self.get_joints_value('torque_enable', [name], clear_value=False)[0] == 1
 

@@ -43,6 +43,11 @@ class OrbitaActuator:
         self.disk_top = OrbitaDisk()
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
 
+    def get_id_for_disk(self, disk_name: str) -> int:
+        """Get the index for a specified disk."""
+        disk = getattr(self, disk_name)
+        return self.disks.index(disk)
+
     def get_value_as_usi(self, register: OrbitaRegister) -> List[float]:
         """Get the value for each disk of the specified register."""
         return [
