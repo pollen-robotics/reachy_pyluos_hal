@@ -82,6 +82,7 @@ class Reachy(GateProtocol):
         self.dxl4id: Dict[int, DynamixelMotor] = {}
 
         self.orbita4id: Dict[int, OrbitaActuator] = {}
+        self.orbitas: Dict[str, OrbitaActuator] = {}
 
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
@@ -112,6 +113,7 @@ class Reachy(GateProtocol):
                     self.force4id[dev.id] = dev
                 if isinstance(dev, OrbitaActuator):
                     self.orbita4id[dev.id] = dev
+                    self.orbitas[name] = dev
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -147,7 +149,7 @@ class Reachy(GateProtocol):
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         return [
-            self.joints[name].get_value_as_usi(register, convert=True)
+            self.joints[name].get_value_as_usi(register)
             for name in joint_names
         ]
 
@@ -177,6 +179,22 @@ class Reachy(GateProtocol):
             cached_speed = dict(zip(names, self.get_joints_value('moving_speed', names, clear_value=False)))
             self.set_joints_value('moving_speed', cached_speed)
             self.get_joints_value('goal_position', names, clear_value=True)
+
+    def get_orbita_values(self, register_name: str, orbita_name: str, clear_value: bool) -> List[float]:
+        """Retrieve register value on the specified orbita actuator."""
+        orbita = self.orbitas[orbita_name]
+        register = OrbitaActuator.register_address[register_name]
+        gate = self.gate4name[orbita_name]
+
+        if clear_value:
+            orbita.clear_value(register)
+
+            gate.protocol.send_orbita_get(
+                orbita_id=orbita.id,
+                register=register.value,
+            )
+
+        return orbita.get_value_as_usi(register)
 
     def _is_torque_enable(self, name: str) -> bool:
         return self.get_joints_value('torque_enable', [name], clear_value=False)[0] == 1
