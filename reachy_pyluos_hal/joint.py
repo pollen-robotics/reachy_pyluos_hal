@@ -46,7 +46,7 @@ class Joint(ABC):
         """Get the up-to-date specified value."""
         return self.registers[register].get()
 
-    def get_value_as_usi(self, register: str, convert: bool) -> float:
+    def get_value_as_usi(self, register: str) -> float:
         """Get the up-to-date specified value."""
         return self.registers[register].get_as_usi()
 
