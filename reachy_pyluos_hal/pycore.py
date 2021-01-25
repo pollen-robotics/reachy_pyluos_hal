@@ -181,7 +181,7 @@ class GateProtocol(Protocol):
             ids, loads = [], []
             for i in range(nb_sensors):
                 ids.append(payload[5 * i + 1])
-                loads.append(struct.unpack('<f', payload[5 * i + 2: 5 * i + 6])[0])
+                loads.append(payload[5 * i + 2: 5 * i + 6])
             self.handle_load_pub_data(ids, loads)
 
         elif payload[0] == self.MSG_TYPE_ORBITA_PUB_DATA:
@@ -225,7 +225,7 @@ class GateProtocol(Protocol):
         """Handle dxl update received on a gate client."""
         raise NotImplementedError
 
-    def handle_load_pub_data(self, ids: List[int], values: List[float]):
+    def handle_load_pub_data(self, ids: List[int], values: List[bytes]):
         """Handle load update received on a gate client."""
         raise NotImplementedError
 

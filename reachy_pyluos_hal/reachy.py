@@ -1,10 +1,11 @@
 """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
 
-import numpy as np
+import sys
 
 from typing import Dict, List
 from logging import Logger
 from glob import glob
+from math import pi
 
 from threading import Lock
 from collections import OrderedDict, defaultdict
@@ -23,29 +24,37 @@ class Reachy(GateProtocol):
 
     devices: List[Dict[str, Device]] = [
         OrderedDict([
-            ('r_shoulder_pitch', MX106(id=10, offset=np.pi/2, direct=False)),
-            ('r_shoulder_roll', MX64(id=11, offset=np.pi/2, direct=False)),
+            ('r_shoulder_pitch', MX106(id=10, offset=pi/2, direct=False)),
+            ('r_shoulder_roll', MX64(id=11, offset=pi/2, direct=False)),
             ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
             ('r_elbow_pitch', MX64(id=13, offset=0.0, direct=False)),
             ('r_forearm_yaw', AX18(id=14, offset=0.0, direct=False)),
-            ('r_wrist_pitch', MX28(id=15, offset=0.0, direct=False)),
+            ('r_wrist_pitch', AX18(id=15, offset=0.0, direct=False)),
             ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
-            ('r_force_gripper', ForceSensor(id=10)),
+            # ('r_force_gripper', ForceSensor(id=10)),
         ]),
-        OrderedDict([
-            ('l_shoulder_pitch', MX106(id=20, offset=np.pi/2, direct=True)),
-            ('l_shoulder_roll', MX64(id=21, offset=-np.pi/2, direct=False)),
-            ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
-            ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
-            ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
-            ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
-            ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
-            ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
-            ('l_force_gripper', ForceSensor(id=20)),
-        ]),
+        # OrderedDict([
+        #     ('l_shoulder_pitch', MX106(id=20, offset=pi/2, direct=True)),
+        #     ('l_shoulder_roll', MX64(id=21, offset=-pi/2, direct=False)),
+        #     ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
+        #     ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
+        #     ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
+        #     ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
+        #     ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
+        #     ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
+        #     ('l_force_gripper', ForceSensor(id=20)),
+        # ]),
+        # OrderedDict([
+        #     ('neck', OrbitaActuator(id=10)),
+        # ]),
     ]
-    ports: List[str] = glob('/dev/tty.usb*')
+    if sys.platform == 'linux':
+        port_template: str = '/dev/ttyUSB*'
+    elif sys.platform == 'darwin':
+        port_template: str = '/dev/tty.usb*'
+    else:
+        raise OSError('Unsupported platform')
 
     def __init__(self, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
@@ -58,7 +67,7 @@ class Reachy(GateProtocol):
                 with _self.lock:
                     return self.handle_dxl_pub_data(register, ids, errors, values)
 
-            def handle_load_pub_data(_self, ids: List[int], values: List[float]):
+            def handle_load_pub_data(_self, ids: List[int], values: List[bytes]):
                 with _self.lock:
                     return self.handle_load_pub_data(ids, values)
 
@@ -79,6 +88,10 @@ class Reachy(GateProtocol):
 
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
+
+        self.ports = glob(self.port_template)
+        if len(self.ports) == 0:
+            raise IOError(f'No Gate found on "{self.port_template}"')
 
         for devices in self.devices:
             self.logger.info(f'Looking for {list(devices.keys())} on {self.ports}.')
@@ -132,15 +145,12 @@ class Reachy(GateProtocol):
                     gate = self.gate4name[name]
                     dxl_ids_per_gate[gate].append(joint.id)
 
-        addr, num_bytes = DynamixelMotor.register_config[register]
+        addr, num_bytes = DynamixelMotor.dxl_config[register]
         for gate, ids in dxl_ids_per_gate.items():
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         return [
-            self.joints[name].convert_to_usi(
-                register,
-                self.joints[name].get_value(register),
-            )
+            self.joints[name].get_value_as_usi(register, convert=True)
             for name in joint_names
         ]
 
@@ -151,19 +161,17 @@ class Reachy(GateProtocol):
         One set request per gate is sent (with possible multiple ids).
         """
         dxl_data_per_gate: Dict[GateClient, Dict[int, bytes]] = defaultdict(dict)
-        for name, value in values_for_joints.items():
+        for name, dxl_value in values_for_joints.items():
             joint = self.joints[name]
 
             if isinstance(joint, DynamixelMotor):
-                dxl_raw_value = joint.convert_to_raw(register, value)
+                self.dxl4id[joint.id].update_value_using_usi(register, dxl_value)
 
                 if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
                     gate = self.gate4name[name]
-                    dxl_data_per_gate[gate][joint.id] = dxl_raw_value
+                    dxl_data_per_gate[gate][joint.id] = self.dxl4id[joint.id].get_value(register)
 
-                self.dxl4id[joint.id].update_value(register, dxl_raw_value)
-
-        addr, num_bytes = DynamixelMotor.register_config[register]
+        addr, num_bytes = DynamixelMotor.dxl_config[register]
         for gate, value_for_id in dxl_data_per_gate.items():
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
@@ -183,7 +191,7 @@ class Reachy(GateProtocol):
                 self.logger.warning(f'Dynamixel error {err} on motor id={id}!')
             self.dxl4id[id].update_value(DynamixelMotor.find_register(addr), val)
 
-    def handle_load_pub_data(self, ids: List[int], values: List[float]):
+    def handle_load_pub_data(self, ids: List[int], values: List[bytes]):
         """Handle load update received on a gate client."""
         for id, val in zip(ids, values):
             self.force4id[id].update_force(val)

@@ -2,7 +2,6 @@
 
 from abc import abstractproperty
 from numpy import clip, deg2rad, pi
-from typing import Union
 from struct import pack, unpack
 
 
@@ -12,7 +11,7 @@ from .joint import Joint
 class DynamixelMotor(Joint):
     """Dynamixel implentation of a Joint."""
 
-    register_config = {
+    dxl_config = {
         'torque_enable': (24, 1),
         'goal_position': (30, 2),
         'moving_speed': (32, 2),
@@ -23,11 +22,18 @@ class DynamixelMotor(Joint):
 
     def __init__(self, id: int, offset: float, direct: bool) -> None:
         """Set up the dynamixel motor with its id, and an offset and direction."""
-        super().__init__()
-
         self.id = id
         self.offset = offset
         self.direct = direct
+
+        super().__init__({
+            'torque_enable': (self.torque_enabled_to_usi, self.torque_enabled_to_raw),
+            'goal_position': (self.position_to_usi, self.position_to_raw),
+            'moving_speed': (self.speed_to_usi, self.speed_to_raw),
+            'torque_limit': (self.torque_to_usi, self.torque_to_raw),
+            'present_position': (self.position_to_usi, self.position_to_raw),
+            'present_temperature': (self.temperature_to_usi, self.temperature_to_raw),
+        })
 
     def __repr__(self) -> str:
         """Represent DynamixelMotor."""
@@ -51,40 +57,10 @@ class DynamixelMotor(Joint):
     @classmethod
     def find_register(cls, addr: int) -> str:
         """Find register name by its address."""
-        for reg, (reg_addr, _) in cls.register_config.items():
+        for reg, (reg_addr, _) in cls.dxl_config.items():
             if reg_addr == addr:
                 return reg
         raise KeyError(addr)
-
-    def convert_to_raw(self, register: str, value: float) -> bytes:
-        """Convert a raw value to its USI value."""
-        if register == 'torque_enable':
-            return self.torque_enabled_to_raw(value)
-        if register in ('goal_position', 'present_position'):
-            return self.position_to_raw(value)
-        if register == 'moving_speed':
-            return self.speed_to_raw(value)
-        if register == 'torque_limit':
-            return self.torque_to_raw(value)
-        if register == 'present_temperature':
-            return self.temperature_to_raw(value)
-
-        raise KeyError(register)
-
-    def convert_to_usi(self, register: str, value: bytes) -> Union[float, bool]:
-        """Convert a USI value to its raw value."""
-        if register == 'torque_enable':
-            return self.torque_enabled_to_usi(value)
-        if register in ('goal_position', 'present_position'):
-            return self.position_to_usi(value)
-        if register == 'moving_speed':
-            return self.speed_to_usi(value)
-        if register == 'torque_limit':
-            return self.torque_to_usi(value)
-        if register == 'present_temperature':
-            return self.temperature_to_usi(value)
-
-        raise KeyError(register)
 
     def torque_enabled_to_raw(self, value: float) -> bytes:
         """Convert torque-enabled to raw."""
