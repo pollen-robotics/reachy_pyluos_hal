@@ -31,22 +31,19 @@ class Reachy(GateProtocol):
             ('r_wrist_pitch', AX18(id=15, offset=0.0, direct=False)),
             ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
-            # ('r_force_gripper', ForceSensor(id=10)),
+            ('r_force_gripper', ForceSensor(id=10)),
         ]),
-        # OrderedDict([
-        #     ('l_shoulder_pitch', MX106(id=20, offset=pi/2, direct=True)),
-        #     ('l_shoulder_roll', MX64(id=21, offset=-pi/2, direct=False)),
-        #     ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
-        #     ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
-        #     ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
-        #     ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
-        #     ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
-        #     ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
-        #     ('l_force_gripper', ForceSensor(id=20)),
-        # ]),
-        # OrderedDict([
-        #     ('neck', OrbitaActuator(id=10)),
-        # ]),
+        OrderedDict([
+            ('l_shoulder_pitch', MX106(id=20, offset=pi/2, direct=True)),
+            ('l_shoulder_roll', MX64(id=21, offset=-pi/2, direct=False)),
+            ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
+            ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
+            ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
+            ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
+            ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
+            ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
+            ('l_force_gripper', ForceSensor(id=20)),
+        ]),
     ]
     if sys.platform == 'linux':
         port_template: str = '/dev/ttyUSB*'
