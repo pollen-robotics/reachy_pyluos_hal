@@ -4,31 +4,35 @@ It can be any DynamixelMotor or an OrbitaMotor.
 """
 
 from abc import ABC
-from typing import List
+from typing import Callable, Dict, Tuple
 
 from .register import Register
 
 
 class Joint(ABC):
-    """Joint abstraction."""
+    """Joint abstraction.
 
-    def __init__(self) -> None:
+    Should define the following registers:
+        'torque_enable'
+        'goal_position'
+        'moving_speed'
+        'torque_limit'
+        'present_position'
+        'present_temperature'
+    """
+
+    def __init__(self, register_config: Dict[str,
+                                             Tuple[
+                                                 Callable[[bytes], float],
+                                                 Callable[[float], bytes]
+                                             ]]
+
+                 ) -> None:
         """Set up internal registers."""
         self.registers = {
-            reg: Register()
-            for reg in self.get_requested_registers()
+            reg: Register(cvt_as_usi, cvt_as_raw)
+            for reg, (cvt_as_usi, cvt_as_raw) in register_config.items()
         }
-
-    def get_requested_registers(self) -> List[str]:
-        """Get the registers that should be implemented by all types of joint."""
-        return [
-            'torque_enable',
-            'goal_position',
-            'moving_speed',
-            'torque_limit',
-            'present_position',
-            'present_temperature',
-        ]
 
     def is_value_set(self, register: str) -> bool:
         """Check if the register has been set since last reset."""
@@ -42,15 +46,14 @@ class Joint(ABC):
         """Get the up-to-date specified value."""
         return self.registers[register].get()
 
+    def get_value_as_usi(self, register: str, convert: bool) -> float:
+        """Get the up-to-date specified value."""
+        return self.registers[register].get_as_usi()
+
     def update_value(self, register: str, val: bytes):
         """Update the specified register with the raw value received from a gate."""
         self.registers[register].update(val)
 
-    def convert_to_usi(self, register: str, raw_value: bytes) -> float:
-        """Convert a raw value to its USI value."""
-        ...
-
-    def convert_to_raw(self, register: str, usi_value: float) -> bytes:
-        """Convert a USI value to its raw representation."""
-        ...
-
+    def update_value_using_usi(self, register: str, val: float):
+        """Update the specified register with its USI value received from a gate."""
+        self.registers[register].update_using_usi(val)
