@@ -28,7 +28,7 @@ class Reachy(GateProtocol):
             ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
             ('r_elbow_pitch', MX64(id=13, offset=0.0, direct=False)),
             ('r_forearm_yaw', AX18(id=14, offset=0.0, direct=False)),
-            ('r_wrist_pitch', AX18(id=15, offset=0.0, direct=False)),
+            ('r_wrist_pitch', MX28(id=15, offset=0.0, direct=False)),
             ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
             ('r_force_gripper', ForceSensor(id=10)),
