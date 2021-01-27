@@ -12,7 +12,7 @@ class OrbitaRegister(Enum):
     """Enum for the available Orbita Registers."""
 
     angle_limit = 0
-    temperature_limit = 1
+    temperature_shutdown = 1
 
     present_position = 10
     present_speed = 11
@@ -78,8 +78,12 @@ class OrbitaDisk:
         """Create all Orbita Register."""
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
+        self.max_torque = Register(self.max_torque_as_usi, self.max_torque_as_raw)
         self.temperature = Register(self.temperature_as_usi, self.temperature_as_raw)
+        self.temperature_shutdown = Register(self.temperature_as_usi, self.temperature_as_raw)
         self.compliant = Register(self.compliant_as_usi, self.compliant_as_raw)
+        self.angle_limit = Register(self.limits_as_usi, self.limits_as_raw)
+        self.pid = Register(self.gain_as_usi, self.gain_as_raw)
 
     def position_as_usi(self, val: bytes) -> float:
         """Convert raw position as USI."""
@@ -104,3 +108,29 @@ class OrbitaDisk:
     def compliant_as_raw(self, val: float) -> bytes:
         """Convert compliant as raw value."""
         return bytes([0]) if val == 0.0 else bytes([1])
+
+    def max_torque_as_usi(self, val: bytes) -> float:
+        """Convert max torque as USI (%)."""
+        return struct.unpack('f', val)[0]
+
+    def max_torque_as_raw(self, val: float) -> bytes:
+        """Convert max torque as raw value."""
+        return struct.pack('f', val)
+
+    def gain_as_usi(self, val: bytes) -> List[float]:
+        """Convert gain as USI."""
+        return struct.unpack('fff', val)
+
+    def gain_as_raw(self, val: List[float]) -> bytes:
+        """Convert gain as raw value."""
+        return struct.pack('fff', *val)
+
+    def limits_as_usi(self, val: bytes) -> List[float]:
+        """Convert limits angle as USI value."""
+        nb_val = len(val) // 4
+        return struct.unpack('i' * nb_val, val)
+
+    def limits_as_raw(self, val: List[float]) -> bytes:
+        """Convert limits angle as raw value."""
+        return struct.pack('i' * len(val), *val)
+

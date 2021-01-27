@@ -157,7 +157,7 @@ class GateProtocol(Protocol):
             self.logger.info(f'Got msg {list(payload)}')
 
         if payload[0] == self.MSG_MODULE_ASSERT:
-            self.handle_assert(payload[1:].decode())
+            self.handle_assert(payload[1:])
 
         elif payload[0] == self.MSG_TYPE_PUB_DATA:
             register = payload[1]
@@ -233,7 +233,7 @@ class GateProtocol(Protocol):
         """Handle orbita update received on a gate client."""
         raise NotImplementedError
 
-    def handle_assert(self, msg: str):
+    def handle_assert(self, msg: bytes):
         """Handle an assertion received on a gate client."""
         raise NotImplementedError
 

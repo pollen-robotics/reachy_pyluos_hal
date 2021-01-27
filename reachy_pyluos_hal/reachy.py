@@ -72,7 +72,7 @@ class Reachy(GateProtocol):
                 with _self.lock:
                     return self.handle_orbita_pub_data(id, register, values)
 
-            def handle_assert(_self, msg: str):
+            def handle_assert(_self, msg: bytes):
                 with _self.lock:
                     return self.handle_assert(msg)
 
@@ -230,6 +230,6 @@ class Reachy(GateProtocol):
         """Handle orbita update received on a gate client."""
         self.orbita4id[orbita_id].update_value(reg_type, values)
 
-    def handle_assert(self, msg: str):
+    def handle_assert(self, msg: bytes):
         """Handle an assertion received on a gate client."""
         raise AssertionError(msg)
