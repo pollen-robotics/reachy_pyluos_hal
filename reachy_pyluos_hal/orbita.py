@@ -1,6 +1,7 @@
 """Orbita Actuator abstraction."""
 
 import struct
+import numpy as np
 
 from enum import Enum
 from typing import Dict, List
@@ -34,13 +35,16 @@ class OrbitaActuator:
         reg.name: reg for reg in OrbitaRegister
     }
 
+    reduction = 52 / 24
+    resolution = 4096
+
     def __init__(self, id: int) -> None:
         """Create 3 disks (bottom, middle, top) with their registers."""
         self.id = id
 
-        self.disk_bottom = OrbitaDisk()
-        self.disk_middle = OrbitaDisk()
-        self.disk_top = OrbitaDisk()
+        self.disk_bottom = OrbitaDisk(self.reduction, self.resolution)
+        self.disk_middle = OrbitaDisk(self.reduction, self.resolution)
+        self.disk_top = OrbitaDisk(self.reduction, self.resolution)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
 
     def get_id_for_disk(self, disk_name: str) -> int:
@@ -74,7 +78,7 @@ class OrbitaActuator:
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
 
-    def __init__(self) -> None:
+    def __init__(self, resolution, reduction) -> None:
         """Create all Orbita Register."""
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
@@ -85,13 +89,21 @@ class OrbitaDisk:
         self.angle_limit = Register(self.limits_as_usi, self.limits_as_raw)
         self.pid = Register(self.gain_as_usi, self.gain_as_raw)
 
+        self.resolution = resolution
+        self.reduction = reduction
+
     def position_as_usi(self, val: bytes) -> float:
         """Convert raw position as USI."""
-        return struct.unpack('i', val)[0]
+        encoder_value = struct.unpack('i', val)[0]
+        rads = 2 * np.pi * encoder_value / self.resolution
+        return rads / self.reduction
 
     def position_as_raw(self, val: float) -> bytes:
         """Convert USI position as raw value."""
-        return struct.pack('i', val)
+        rads = val * self.reduction
+        encoder_value = rads * self.resolution / (2 * np.pi)
+        encoder_value = round(encoder_value)
+        return struct.pack('i', encoder_value)
 
     def temperature_as_usi(self, val: bytes) -> float:
         """Convert raw temperature as USI (degree celsius)."""
