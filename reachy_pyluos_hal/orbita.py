@@ -31,6 +31,8 @@ class OrbitaRegister(Enum):
 
     zero = 40
     recalibrate = 41
+    magnetic_quality = 42
+
 
 class OrbitaActuator:
     """Orbtia Actuator abstraction."""
@@ -99,6 +101,7 @@ class OrbitaDisk:
         self.pid = Register(self.gain_as_usi, self.gain_as_raw)
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
+        self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
 
         self.resolution = resolution
         self.reduction = reduction
@@ -180,3 +183,16 @@ class OrbitaDisk:
         """Convert limits angle as raw value."""
         return struct.pack('i' * len(val), *val)
 
+    def quality_as_usi(self, val: bytes) -> float:
+        """Convert magnetic quality to USI (0 = Green, 1 = Orange, 2 = red)."""
+        quality = struct.unpack('B' * len(val), val)
+        if sum(quality) == 0:
+            return 0
+        elif sum(quality) == 2:
+            return 1
+        else:
+            return 2
+
+    def quality_as_raw(self, val: List[float]) -> bytes:
+        """Convert magnetic quality to raw (MagInc, MagDec, Linearity)."""
+        raise NotImplementedError
