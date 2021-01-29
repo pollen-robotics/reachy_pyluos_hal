@@ -6,6 +6,7 @@ from typing import Dict, List
 from logging import Logger
 from glob import glob
 from math import pi
+from operator import attrgetter
 
 from threading import Lock
 from collections import OrderedDict, defaultdict
@@ -15,6 +16,7 @@ from .discovery import find_gate
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18
 from .force_sensor import ForceSensor
 from .joint import Joint
+from .orbita import OrbitaActuator, OrbitaRegister
 from .pycore import GateClient, GateProtocol
 
 
@@ -67,7 +69,11 @@ class Reachy(GateProtocol):
                 with _self.lock:
                     return self.handle_load_pub_data(ids, values)
 
-            def handle_assert(_self, msg: str):
+            def handle_orbita_pub_data(_self, id: int, register: OrbitaRegister, values: bytes):
+                with _self.lock:
+                    return self.handle_orbita_pub_data(id, register, values)
+
+            def handle_assert(_self, msg: bytes):
                 with _self.lock:
                     return self.handle_assert(msg)
 
@@ -75,6 +81,9 @@ class Reachy(GateProtocol):
         self.gate4name: Dict[str, GateClient] = {}
         self.joints: Dict[str, Joint] = {}
         self.dxl4id: Dict[int, DynamixelMotor] = {}
+
+        self.orbita4id: Dict[int, OrbitaActuator] = {}
+        self.orbitas: Dict[str, OrbitaActuator] = {}
 
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
@@ -103,6 +112,9 @@ class Reachy(GateProtocol):
                 if isinstance(dev, ForceSensor):
                     self.force_sensors[name] = dev
                     self.force4id[dev.id] = dev
+                if isinstance(dev, OrbitaActuator):
+                    self.orbita4id[dev.id] = dev
+                    self.orbitas[name] = dev
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -113,6 +125,12 @@ class Reachy(GateProtocol):
         """Stop all GateClients (start sending/receiving data with hardware)."""
         for gate in self.gates:
             gate.stop()
+
+    def setup(self):
+        for name, orbita in self.orbitas.items():
+            zero = self.get_orbita_values('zero', name, clear_value=True)
+            pos = self.get_orbita_values('absolute_position', name, clear_value=True)
+            orbita.set_offset(zero, pos)
 
     def get_joints_value(self, register: str, joint_names: List[str], clear_value: bool) -> List[float]:
         """Retrieve register value on the specified joints.
@@ -138,7 +156,7 @@ class Reachy(GateProtocol):
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         return [
-            self.joints[name].get_value_as_usi(register, convert=True)
+            self.joints[name].get_value_as_usi(register)
             for name in joint_names
         ]
 
@@ -169,6 +187,37 @@ class Reachy(GateProtocol):
             self.set_joints_value('moving_speed', cached_speed)
             self.get_joints_value('goal_position', names, clear_value=True)
 
+    def get_orbita_values(self, register_name: str, orbita_name: str, clear_value: bool) -> List[float]:
+        """Retrieve register value on the specified orbita actuator."""
+        orbita = self.orbitas[orbita_name]
+        register = OrbitaActuator.register_address[register_name]
+        gate = self.gate4name[orbita_name]
+
+        if clear_value:
+            orbita.clear_value(register)
+
+            gate.protocol.send_orbita_get(
+                orbita_id=orbita.id,
+                register=register.value,
+            )
+
+        return orbita.get_value_as_usi(register)
+
+    def set_orbita_values(self, register_name: str, orbita_name: str, value_for_disks: Dict[str, float]):
+        """Set new value for register on the specified disks."""
+        orbita = self.orbitas[orbita_name]
+        register = OrbitaActuator.register_address[register_name]
+        gate = self.gate4name[orbita_name]
+
+        for disk_name, value in value_for_disks.items():
+            attrgetter(f'{disk_name}.{register_name}')(orbita).update_using_usi(value)
+
+        value_for_id = {
+            orbita.get_id_for_disk(disk_name): attrgetter(f'{disk_name}.{register_name}')(orbita).get()
+            for disk_name in value_for_disks.keys()
+        }
+        gate.protocol.send_orbita_set(orbita.id, register.value, value_for_id)
+
     def _is_torque_enable(self, name: str) -> bool:
         return self.get_joints_value('torque_enable', [name], clear_value=False)[0] == 1
 
@@ -184,6 +233,10 @@ class Reachy(GateProtocol):
         for id, val in zip(ids, values):
             self.force4id[id].update_force(val)
 
-    def handle_assert(self, msg: str):
+    def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
+        """Handle orbita update received on a gate client."""
+        self.orbita4id[orbita_id].update_value(reg_type, values)
+
+    def handle_assert(self, msg: bytes):
         """Handle an assertion received on a gate client."""
         raise AssertionError(msg)
