@@ -3,6 +3,7 @@
 import struct
 import numpy as np
 
+from math import pi
 from enum import Enum
 from typing import Dict, List
 
@@ -18,6 +19,7 @@ class OrbitaRegister(Enum):
     present_position = 10
     present_speed = 11
     present_load = 12
+    absolute_position = 13
 
     goal_position = 20
     max_speed = 21
@@ -27,6 +29,8 @@ class OrbitaRegister(Enum):
     pid = 31
     temperature = 32
 
+    zero = 40
+    recalibrate = 41
 
 class OrbitaActuator:
     """Orbtia Actuator abstraction."""
@@ -42,9 +46,9 @@ class OrbitaActuator:
         """Create 3 disks (bottom, middle, top) with their registers."""
         self.id = id
 
-        self.disk_bottom = OrbitaDisk(self.reduction, self.resolution)
-        self.disk_middle = OrbitaDisk(self.reduction, self.resolution)
-        self.disk_top = OrbitaDisk(self.reduction, self.resolution)
+        self.disk_bottom = OrbitaDisk(self.resolution, self.reduction)
+        self.disk_middle = OrbitaDisk(self.resolution, self.reduction)
+        self.disk_top = OrbitaDisk(self.resolution, self.reduction)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
 
     def get_id_for_disk(self, disk_name: str) -> int:
@@ -74,11 +78,16 @@ class OrbitaActuator:
         for disk, val in zip(self.disks, disk_values):
             getattr(disk, register.name).update(val)
 
+    def set_offset(self, zeros: List[int], start_pos: List[int]):
+        """Set the correct offset depending on the hardware zero and orbita starting position."""
+        for disk, z, p in zip(self.disks, zeros, start_pos):
+            disk.set_offset(z, p)
+
 
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
 
-    def __init__(self, resolution, reduction) -> None:
+    def __init__(self, resolution: int, reduction: float) -> None:
         """Create all Orbita Register."""
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
@@ -88,20 +97,45 @@ class OrbitaDisk:
         self.compliant = Register(self.compliant_as_usi, self.compliant_as_raw)
         self.angle_limit = Register(self.limits_as_usi, self.limits_as_raw)
         self.pid = Register(self.gain_as_usi, self.gain_as_raw)
+        self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
+        self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
 
         self.resolution = resolution
         self.reduction = reduction
 
+        self.offset: int = 0
+
+    def set_offset(self, raw_zero: int, raw_pos: int):
+        """Set the correct offset depending on the hardware zero and the disk starting position."""
+        possibilities = [
+            raw_zero,
+            raw_zero + self.resolution,
+            raw_zero - self.resolution,
+        ]
+        distances = [abs(raw_pos - poss) for poss in possibilities]
+        closest = np.argmin(distances)
+        self.offset = possibilities[closest]
+
+    def encoder_position_as_raw(self, val: int) -> bytes:
+        """Convert encoder value to raw."""
+        return struct.pack('i', val)
+
+    def encoder_position_as_usi(self, val: bytes) -> int:
+        """Convert raw position to encoder value."""
+        return struct.unpack('i', val)[0]
+
     def position_as_usi(self, val: bytes) -> float:
         """Convert raw position as USI."""
-        encoder_value = struct.unpack('i', val)[0]
-        rads = 2 * np.pi * encoder_value / self.resolution
+        encoder_value = self.encoder_position_as_usi(val)
+        encoder_value -= self.offset
+        rads = 2 * pi * encoder_value / self.resolution
         return rads / self.reduction
 
     def position_as_raw(self, val: float) -> bytes:
         """Convert USI position as raw value."""
         rads = val * self.reduction
-        encoder_value = rads * self.resolution / (2 * np.pi)
+        encoder_value = rads * self.resolution / (2 * pi)
+        encoder_value += self.offset
         encoder_value = round(encoder_value)
         return struct.pack('i', encoder_value)
 

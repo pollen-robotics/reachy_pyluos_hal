@@ -126,6 +126,12 @@ class Reachy(GateProtocol):
         for gate in self.gates:
             gate.stop()
 
+    def setup(self):
+        for name, orbita in self.orbitas.items():
+            zero = self.get_orbita_values('zero', name, clear_value=True)
+            pos = self.get_orbita_values('absolute_position', name, clear_value=True)
+            orbita.set_offset(zero, pos)
+
     def get_joints_value(self, register: str, joint_names: List[str], clear_value: bool) -> List[float]:
         """Retrieve register value on the specified joints.
 
