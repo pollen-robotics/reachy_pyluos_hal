@@ -233,7 +233,9 @@ class Reachy(GateProtocol):
         for id, err, val in zip(ids, errors, values):
             if (err != 0) and self.logger is not None:
                 self.logger.warning(f'Dynamixel error {err} on motor id={id}!')
-            self.dxl4id[id].update_value(DynamixelMotor.find_register(addr), val)
+
+            m = self.dxl4id[id]
+            m.update_value(m.find_register_by_addr(addr), val)
 
     def handle_load_pub_data(self, ids: List[int], values: List[bytes]):
         """Handle load update received on a gate client."""
