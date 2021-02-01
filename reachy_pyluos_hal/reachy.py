@@ -46,6 +46,11 @@ class Reachy(GateProtocol):
             ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
             ('l_force_gripper', ForceSensor(id=20)),
         ]),
+        OrderedDict([
+            ('neck', OrbitaActuator(id=10)),
+            ('l_antenna', XL320(id=30, offset=0, direct=True)),
+            ('r_antenna', XL320(id=31, offset=0, direct=True)),
+        ]),
     ]
     if sys.platform == 'linux':
         port_template: str = '/dev/ttyUSB*'
