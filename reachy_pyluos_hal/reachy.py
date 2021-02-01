@@ -2,7 +2,7 @@
 
 import sys
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from logging import Logger
 from glob import glob
 from math import pi
@@ -13,7 +13,7 @@ from collections import OrderedDict, defaultdict
 
 from .device import Device
 from .discovery import find_gate
-from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18
+from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18, XL320
 from .force_sensor import ForceSensor
 from .joint import Joint
 from .orbita import OrbitaActuator, OrbitaRegister
@@ -141,6 +141,8 @@ class Reachy(GateProtocol):
         Finally, wait for all joints to received the updated value, converts it and returns it.
         """
         dxl_ids_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
+        dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
+
         for name in joint_names:
             joint = self.joints[name]
             if clear_value:
@@ -150,9 +152,10 @@ class Reachy(GateProtocol):
                 if isinstance(joint, DynamixelMotor):
                     gate = self.gate4name[name]
                     dxl_ids_per_gate[gate].append(joint.id)
+                    dxl_reg_per_gate[gate] = joint.get_register_config(register)
 
-        addr, num_bytes = DynamixelMotor.dxl_config[register]
         for gate, ids in dxl_ids_per_gate.items():
+            addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         return [
@@ -167,6 +170,8 @@ class Reachy(GateProtocol):
         One set request per gate is sent (with possible multiple ids).
         """
         dxl_data_per_gate: Dict[GateClient, Dict[int, bytes]] = defaultdict(dict)
+        dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
+
         for name, dxl_value in values_for_joints.items():
             joint = self.joints[name]
 
@@ -176,9 +181,10 @@ class Reachy(GateProtocol):
                 if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
                     gate = self.gate4name[name]
                     dxl_data_per_gate[gate][joint.id] = self.dxl4id[joint.id].get_value(register)
+                    dxl_reg_per_gate[gate] = self.dxl4id[joint.id].get_register_config(register)
 
-        addr, num_bytes = DynamixelMotor.dxl_config[register]
         for gate, value_for_id in dxl_data_per_gate.items():
+            addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
         if register == 'torque_enable':

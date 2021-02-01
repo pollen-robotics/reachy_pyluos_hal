@@ -3,6 +3,7 @@
 from abc import abstractproperty
 from numpy import clip, deg2rad, pi
 from struct import pack, unpack
+from typing import Dict, Tuple
 
 
 from .joint import Joint
@@ -10,15 +11,6 @@ from .joint import Joint
 
 class DynamixelMotor(Joint):
     """Dynamixel implentation of a Joint."""
-
-    dxl_config = {
-        'torque_enable': (24, 1),
-        'goal_position': (30, 2),
-        'moving_speed': (32, 2),
-        'torque_limit': (34, 2),
-        'present_position': (36, 2),
-        'present_temperature': (43, 1),
-    }
 
     def __init__(self, id: int, offset: float, direct: bool) -> None:
         """Set up the dynamixel motor with its id, and an offset and direction."""
@@ -34,6 +26,10 @@ class DynamixelMotor(Joint):
             'present_position': (self.position_to_usi, self.position_to_raw),
             'present_temperature': (self.temperature_to_usi, self.temperature_to_raw),
         })
+
+    @abstractproperty
+    def dxl_config(self) -> Dict[str, Tuple[int, int]]:
+        ...
 
     def __repr__(self) -> str:
         """Represent DynamixelMotor."""
@@ -54,13 +50,16 @@ class DynamixelMotor(Joint):
         """Return the motor type."""
         ...
 
-    @classmethod
-    def find_register(cls, addr: int) -> str:
+    def find_register_by_addr(self, addr: int) -> str:
         """Find register name by its address."""
-        for reg, (reg_addr, _) in cls.dxl_config.items():
+        for reg, (reg_addr, _) in self.dxl_config.items():
             if reg_addr == addr:
                 return reg
         raise KeyError(addr)
+
+    def get_register_config(self, register: str) -> Tuple[int, int]:
+        """Get register addr and length by its name."""
+        return self.dxl_config[register]
 
     def torque_enabled_to_raw(self, value: float) -> bytes:
         """Convert torque-enabled to raw."""
@@ -120,7 +119,31 @@ class DynamixelMotor(Joint):
         return float(value[0])
 
 
-class MX(DynamixelMotor):
+class DynamixelMotorV1(DynamixelMotor):
+    """Specific motor using protocol V1 registers."""
+    dxl_config = {
+        'torque_enable': (24, 1),
+        'goal_position': (30, 2),
+        'moving_speed': (32, 2),
+        'torque_limit': (34, 2),
+        'present_position': (36, 2),
+        'present_temperature': (43, 1),
+    }
+
+
+class DynamixelMotorV2(DynamixelMotor):
+    """Specific motor using protocol V2 registers."""
+    dxl_config = {
+        'torque_enable': (24, 1),
+        'goal_position': (30, 2),
+        'moving_speed': (32, 2),
+        'torque_limit': (35, 2),
+        'present_position': (37, 2),
+        'present_temperature': (46, 1),
+    }
+
+
+class MX(DynamixelMotorV1):
     """MX specific value."""
 
     @property
@@ -134,7 +157,7 @@ class MX(DynamixelMotor):
         return deg2rad(360)
 
 
-class AX18(DynamixelMotor):
+class AX18(DynamixelMotorV1):
     """AX specific value."""
 
     @property
@@ -178,3 +201,22 @@ class MX28(MX):
     def motor_type(self):
         """Return the motor type."""
         return 'MX28'
+
+
+class XL320(DynamixelMotorV2):
+    """XL320 specific value."""
+
+    @property
+    def max_position(self) -> int:
+        """Return the max position dynamixel register value."""
+        return 1024
+
+    @property
+    def max_radian(self) -> float:
+        """Return the max position (in rad)."""
+        return deg2rad(300)
+
+    @property
+    def motor_type(self):
+        """Return the motor type."""
+        return 'XL320'

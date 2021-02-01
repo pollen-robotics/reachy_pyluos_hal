@@ -22,7 +22,7 @@ class GateProtocol(Protocol):
 
     MSG_TYPE_DXL_GET_REG = 10
     MSG_TYPE_DXL_SET_REG = 11
-    MSG_TYPE_PUB_DATA = 15
+    MSG_TYPE_DXL_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
     MSG_TYPE_ORBITA_GET_REG = 50
     MSG_TYPE_ORBITA_SET_REG = 51
@@ -159,7 +159,7 @@ class GateProtocol(Protocol):
         if payload[0] == self.MSG_MODULE_ASSERT:
             self.handle_assert(payload[1:])
 
-        elif payload[0] == self.MSG_TYPE_PUB_DATA:
+        elif payload[0] == self.MSG_TYPE_DXL_PUB_DATA:
             register = payload[1]
             val_size = payload[2]
             size_per_id = 1 + 2 + val_size
