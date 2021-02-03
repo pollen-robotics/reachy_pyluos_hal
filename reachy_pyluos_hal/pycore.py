@@ -69,18 +69,11 @@ class GateProtocol(Protocol):
     def send_msg(self, payload: bytes):
         """Send message with specified payload."""
         assert (self.transport is not None)
-        # TODO: this should be handle by the gate
-        if not hasattr(self, 'last_send'):
-            self.last_send = 0.0
-
-        if time.time() - self.last_send < 0.001:
-            time.sleep(0.001)
 
         data = self.header + bytes([len(payload)]) + payload
         if self.logger is not None:
             self.logger.debug(f'Sending {list(data)}')
         self.transport.write(data)
-        self.last_send = time.time()
 
     def send_detection_signal(self) -> Dict[int, List[LuosContainer]]:
         """Send request to the gate to retrieve all nodes/containers info."""
