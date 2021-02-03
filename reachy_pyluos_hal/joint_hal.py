@@ -20,11 +20,11 @@ class JointLuos(JointABC):
 
     def get_all_joint_names(self) -> List[str]:
         """Return the names of all joints."""
-        return list(self.reachy.joints.keys())
+        return self.reachy.get_all_joints_names()
 
     def get_joint_positions(self, names: List[str]) -> Optional[List[float]]:
         """Return the current position (in rad) of the specified joints."""
-        return self.reachy.get_joints_value(register='present_position', joint_names=names, clear_value=False)
+        return self.reachy.get_joints_value(register='present_position', joint_names=names)
 
     def get_joint_velocities(self, names: List[str]) -> Optional[List[float]]:
         """Return the current velocity (in rad/s) of the specified joints."""
@@ -36,23 +36,23 @@ class JointLuos(JointABC):
 
     def get_joint_temperatures(self, names: List[str]) -> List[float]:
         """Return the current temperature (in C) of the specified joints."""
-        return self.reachy.get_joints_value(register='present_temperature', joint_names=names, clear_value=False)
+        return self.reachy.get_joints_value(register='present_temperature', joint_names=names)
 
     def get_goal_positions(self, names: List[str]) -> List[float]:
         """Return the goal position (in rad/s) of the specified joints."""
-        return self.reachy.get_joints_value(register='goal_position', joint_names=names, clear_value=True)
+        return self.reachy.get_joints_value(register='goal_position', joint_names=names)
 
     def get_goal_velocities(self, names: List[str]) -> List[float]:
         """Return the goal velocity of the specified joints."""
-        return self.reachy.get_joints_value(register='moving_speed', joint_names=names, clear_value=True)
+        return self.reachy.get_joints_value(register='moving_speed', joint_names=names)
 
     def get_goal_efforts(self, names: List[str]) -> List[float]:
         """Return the goal effort of the specified joints."""
-        return self.reachy.get_joints_value(register='torque_limit', joint_names=names, clear_value=True)
+        return self.reachy.get_joints_value(register='torque_limit', joint_names=names)
 
     def get_compliant(self, names: List[str]) -> List[bool]:
         """Return the compliance of the specified joints."""
-        is_torques_enabled = self.reachy.get_joints_value('torque_enable', names, clear_value=True)
+        is_torques_enabled = self.reachy.get_joints_value('torque_enable', names)
         return [torque == 0 for torque in is_torques_enabled]
 
     def set_goal_positions(self, goal_positions: Dict[str, float]) -> None:

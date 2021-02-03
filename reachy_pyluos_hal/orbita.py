@@ -48,10 +48,18 @@ class OrbitaActuator:
         """Create 3 disks (bottom, middle, top) with their registers."""
         self.id = id
 
-        self.disk_bottom = OrbitaDisk(self.resolution, self.reduction)
-        self.disk_middle = OrbitaDisk(self.resolution, self.reduction)
-        self.disk_top = OrbitaDisk(self.resolution, self.reduction)
+        self.disk_bottom = OrbitaDisk('disk_bottom', self.resolution, self.reduction)
+        self.disk_middle = OrbitaDisk('disk_middle', self.resolution, self.reduction)
+        self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
+
+    def get_disks_name(self) -> List[str]:
+        """Get the name of each disk."""
+        return [d.name for d in self.disks]
+
+    def get_joints_name(self) -> List[str]:
+        """Get the name of each joint (disk + fake RPY joint)."""
+        return self.get_disks_name() + ['roll', 'pitch', 'yaw']
 
     def get_id_for_disk(self, disk_name: str) -> int:
         """Get the index for a specified disk."""
@@ -89,8 +97,10 @@ class OrbitaActuator:
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
 
-    def __init__(self, resolution: int, reduction: float) -> None:
+    def __init__(self, name: str, resolution: int, reduction: float) -> None:
         """Create all Orbita Register."""
+        self.name = name
+
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
         self.max_torque = Register(self.max_torque_as_usi, self.max_torque_as_raw)
