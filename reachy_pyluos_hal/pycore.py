@@ -39,10 +39,11 @@ class GateProtocol(Protocol):
     logger: Optional[Logger] = None
     header = bytes([255, 255])
 
-    def __init__(self) -> None:
+    def __init__(self, timeout: float = 0.5) -> None:
         """Prepare the input buffer."""
         self.transport: Optional[ReaderThread] = None
         self.buffer = bytearray()
+        self.timeout = timeout
 
         self._nodes: Dict[int, List[int]] = {}
         self._containers: Dict[int, Tuple[str, str]] = {}
@@ -86,9 +87,11 @@ class GateProtocol(Protocol):
         self._waiting_for_nodes = Event()
         self.send_msg(bytes([self.MSG_DETECTION_GET_NODES]))
 
-        self._waiting_for_nodes.wait()
+        if not self._waiting_for_nodes.wait(self.timeout):
+            raise TimeoutError
         for id, evt in self._waiting_for_containers.items():
-            evt.wait()
+            if not evt.wait(self.timeout):
+                raise TimeoutError
 
         devices = defaultdict(list)
 
