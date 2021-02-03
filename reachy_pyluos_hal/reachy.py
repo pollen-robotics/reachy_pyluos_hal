@@ -253,7 +253,7 @@ class Reachy(GateProtocol):
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
         if register == 'torque_enable':
-            names = list(values_for_dxls.keys())
+            names = [name for name, value in values_for_dxls.items() if value == 1]
             cached_speed = dict(zip(names, self.get_dxls_value('moving_speed', names, clear_value=False)))
             self.set_dxls_value('moving_speed', cached_speed)
             self.get_dxls_value('goal_position', names, clear_value=True)
