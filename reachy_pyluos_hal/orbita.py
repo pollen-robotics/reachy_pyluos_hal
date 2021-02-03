@@ -25,7 +25,7 @@ class OrbitaRegister(Enum):
     max_speed = 21
     max_torque = 22
 
-    compliant = 30
+    torque_enable = 30
     pid = 31
     temperature = 32
 
@@ -48,10 +48,18 @@ class OrbitaActuator:
         """Create 3 disks (bottom, middle, top) with their registers."""
         self.id = id
 
-        self.disk_bottom = OrbitaDisk(self.resolution, self.reduction)
-        self.disk_middle = OrbitaDisk(self.resolution, self.reduction)
-        self.disk_top = OrbitaDisk(self.resolution, self.reduction)
+        self.disk_bottom = OrbitaDisk('disk_bottom', self.resolution, self.reduction)
+        self.disk_middle = OrbitaDisk('disk_middle', self.resolution, self.reduction)
+        self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
+
+    def get_disks_name(self) -> List[str]:
+        """Get the name of each disk."""
+        return [d.name for d in self.disks]
+
+    def get_joints_name(self) -> List[str]:
+        """Get the name of each joint (disk + fake RPY joint)."""
+        return self.get_disks_name() + ['roll', 'pitch', 'yaw']
 
     def get_id_for_disk(self, disk_name: str) -> int:
         """Get the index for a specified disk."""
@@ -89,14 +97,16 @@ class OrbitaActuator:
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
 
-    def __init__(self, resolution: int, reduction: float) -> None:
+    def __init__(self, name: str, resolution: int, reduction: float) -> None:
         """Create all Orbita Register."""
+        self.name = name
+
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
         self.max_torque = Register(self.max_torque_as_usi, self.max_torque_as_raw)
         self.temperature = Register(self.temperature_as_usi, self.temperature_as_raw)
         self.temperature_shutdown = Register(self.temperature_as_usi, self.temperature_as_raw)
-        self.compliant = Register(self.compliant_as_usi, self.compliant_as_raw)
+        self.torque_enable = Register(self.torque_enable_as_usi, self.torque_enable_as_raw)
         self.angle_limit = Register(self.limits_as_usi, self.limits_as_raw)
         self.pid = Register(self.gain_as_usi, self.gain_as_raw)
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
@@ -150,12 +160,12 @@ class OrbitaDisk:
         """Convert temperature as raw value."""
         return struct.pack('f', val)
 
-    def compliant_as_usi(self, val: bytes) -> float:
-        """Convert compliancy as USI (0 or 1)."""
+    def torque_enable_as_usi(self, val: bytes) -> float:
+        """Convert torque enable as USI (0 or 1)."""
         return 0.0 if val[0] == 0 else 1.0
 
-    def compliant_as_raw(self, val: float) -> bytes:
-        """Convert compliant as raw value."""
+    def torque_enable_as_raw(self, val: float) -> bytes:
+        """Convert torque enable as raw value."""
         return bytes([0]) if val == 0.0 else bytes([1])
 
     def max_torque_as_usi(self, val: bytes) -> float:

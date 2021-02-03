@@ -2,7 +2,7 @@
 
 import sys
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from logging import Logger
 from glob import glob
 from math import pi
@@ -84,11 +84,11 @@ class Reachy(GateProtocol):
 
         self.gates: List[GateClient] = []
         self.gate4name: Dict[str, GateClient] = {}
-        self.joints: Dict[str, Joint] = {}
+        self.dxls: Dict[str, Joint] = OrderedDict({})
         self.dxl4id: Dict[int, DynamixelMotor] = {}
 
         self.orbita4id: Dict[int, OrbitaActuator] = {}
-        self.orbitas: Dict[str, OrbitaActuator] = {}
+        self.orbitas: Dict[str, OrbitaActuator] = OrderedDict({})
 
         self.force_sensors: Dict[str, ForceSensor] = {}
         self.force4id: Dict[int, ForceSensor] = {}
@@ -110,10 +110,9 @@ class Reachy(GateProtocol):
 
             for name, dev in devices.items():
                 self.gate4name[name] = gate
-                if isinstance(dev, Joint):
-                    self.joints[name] = dev
-                    if isinstance(dev, DynamixelMotor):
-                        self.dxl4id[dev.id] = dev
+                if isinstance(dev, DynamixelMotor):
+                    self.dxls[name] = dev
+                    self.dxl4id[dev.id] = dev
                 if isinstance(dev, ForceSensor):
                     self.force_sensors[name] = dev
                     self.force4id[dev.id] = dev
@@ -138,8 +137,68 @@ class Reachy(GateProtocol):
             pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True)]
             orbita.set_offset(zero, pos)
 
-    def get_joints_value(self, register: str, joint_names: List[str], clear_value: bool) -> List[float]:
-        """Retrieve register value on the specified joints.
+    def get_all_joints_names(self) -> List[str]:
+        """Return the names of all joints."""
+        dxl_names = list(self.dxls.keys())
+        orbita_disk_names = []
+
+        for name, orbita in self.orbitas.items():
+            for disk_name in orbita.get_joints_name():
+                orbita_disk_names.append(f'{name}_{disk_name}')
+
+        return dxl_names + orbita_disk_names
+
+    def get_joints_value(self, register: str, joint_names: List[str]) -> List[float]:
+        """Return the value of the specified joints."""
+        clear_value = False if register in ('present_position', 'present_temperature') else True
+
+        dxl_names = [name for name in joint_names if name in self.dxls]
+        dxl_values = dict(zip(dxl_names, self.get_dxls_value(register, dxl_names, clear_value)))
+
+        orbitas_values = {}
+        for name in joint_names:
+            orbita_name = name.partition('_')[0]
+            if orbita_name in self.orbitas:
+                disk_values = self.get_orbita_values(register, orbita_name, clear_value)
+                for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
+                    orbitas_values[f'{orbita_name}_{disk}'] = val
+                orbitas_values[f'{orbita_name}_roll'] = 0
+                orbitas_values[f'{orbita_name}_pitch'] = 0
+                orbitas_values[f'{orbita_name}_yaw'] = 0
+
+        values = {}
+        values.update(dxl_values)
+        values.update(orbitas_values)
+        return [values[joint] for joint in joint_names]
+
+    def set_joints_value(self, register: str, value_for_joint: Dict[str, float]):
+        """Set the value for the specified joints."""
+        dxl_values: Dict[str, float] = {}
+        orbita_values: Dict[str, Dict[str, float]] = {}
+
+        for name, value in value_for_joint.items():
+            orbita_name, _, disk_name = name.partition('_')
+
+            if name in self.dxls:
+                dxl_values[name] = value
+
+            elif orbita_name in self.orbitas:
+                if disk_name not in self.orbitas[orbita_name].get_disks_name():
+                    continue
+
+                if orbita_name not in orbita_values:
+                    orbita_values[orbita_name] = {}
+
+                orbita_values[orbita_name][disk_name] = value
+
+        if dxl_values:
+            self.set_dxls_value(register, dxl_values)
+        if orbita_values:
+            for orbita, values in orbita_values.items():
+                self.set_orbita_values(register, orbita, values)
+
+    def get_dxls_value(self, register: str, dxl_names: List[str], clear_value: bool) -> List[float]:
+        """Retrieve register value on the specified dynamixels.
 
         The process is done as follows.
         First, clear any cached value for the register, we want to make sure we get an updated one.
@@ -149,28 +208,28 @@ class Reachy(GateProtocol):
         dxl_ids_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
         dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
 
-        for name in joint_names:
-            joint = self.joints[name]
+        for name in dxl_names:
+            dxl = self.dxls[name]
             if clear_value:
-                joint.clear_value(register)
+                dxl.clear_value(register)
 
-            if clear_value or (not joint.is_value_set(register)):
-                if isinstance(joint, DynamixelMotor):
+            if clear_value or (not dxl.is_value_set(register)):
+                if isinstance(dxl, DynamixelMotor):
                     gate = self.gate4name[name]
-                    dxl_ids_per_gate[gate].append(joint.id)
-                    dxl_reg_per_gate[gate] = joint.get_register_config(register)
+                    dxl_ids_per_gate[gate].append(dxl.id)
+                    dxl_reg_per_gate[gate] = dxl.get_register_config(register)
 
         for gate, ids in dxl_ids_per_gate.items():
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         return [
-            self.joints[name].get_value_as_usi(register)
-            for name in joint_names
+            self.dxls[name].get_value_as_usi(register)
+            for name in dxl_names
         ]
 
-    def set_joints_value(self, register: str, values_for_joints: Dict[str, float]):
-        """Set new value for register on the specified joints.
+    def set_dxls_value(self, register: str, values_for_dxls: Dict[str, float]):
+        """Set new value for register on the specified dynamixels.
 
         The values are splitted among the gates corresponding to the joints.
         One set request per gate is sent (with possible multiple ids).
@@ -178,26 +237,26 @@ class Reachy(GateProtocol):
         dxl_data_per_gate: Dict[GateClient, Dict[int, bytes]] = defaultdict(dict)
         dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
 
-        for name, dxl_value in values_for_joints.items():
-            joint = self.joints[name]
+        for name, dxl_value in values_for_dxls.items():
+            dxl = self.dxls[name]
 
-            if isinstance(joint, DynamixelMotor):
-                self.dxl4id[joint.id].update_value_using_usi(register, dxl_value)
+            if isinstance(dxl, DynamixelMotor):
+                self.dxl4id[dxl.id].update_value_using_usi(register, dxl_value)
 
                 if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
                     gate = self.gate4name[name]
-                    dxl_data_per_gate[gate][joint.id] = self.dxl4id[joint.id].get_value(register)
-                    dxl_reg_per_gate[gate] = self.dxl4id[joint.id].get_register_config(register)
+                    dxl_data_per_gate[gate][dxl.id] = self.dxl4id[dxl.id].get_value(register)
+                    dxl_reg_per_gate[gate] = self.dxl4id[dxl.id].get_register_config(register)
 
         for gate, value_for_id in dxl_data_per_gate.items():
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
         if register == 'torque_enable':
-            names = list(values_for_joints.keys())
-            cached_speed = dict(zip(names, self.get_joints_value('moving_speed', names, clear_value=False)))
-            self.set_joints_value('moving_speed', cached_speed)
-            self.get_joints_value('goal_position', names, clear_value=True)
+            names = list(values_for_dxls.keys())
+            cached_speed = dict(zip(names, self.get_dxls_value('moving_speed', names, clear_value=False)))
+            self.set_dxls_value('moving_speed', cached_speed)
+            self.get_dxls_value('goal_position', names, clear_value=True)
 
     def get_orbita_values(self, register_name: str, orbita_name: str, clear_value: bool) -> List[float]:
         """Retrieve register value on the specified orbita actuator."""
@@ -231,7 +290,7 @@ class Reachy(GateProtocol):
         gate.protocol.send_orbita_set(orbita.id, register.value, value_for_id)
 
     def _is_torque_enable(self, name: str) -> bool:
-        return self.get_joints_value('torque_enable', [name], clear_value=False)[0] == 1
+        return self.get_dxls_value('torque_enable', [name], clear_value=False)[0] == 1
 
     def handle_dxl_pub_data(self, addr: int, ids: List[int], errors: List[int], values: List[bytes]):
         """Handle dxl update received on a gate client."""
