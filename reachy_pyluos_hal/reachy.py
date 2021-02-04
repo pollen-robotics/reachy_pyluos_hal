@@ -152,7 +152,7 @@ class Reachy(GateProtocol):
 
     def get_joints_value(self, register: str, joint_names: List[str]) -> List[float]:
         """Return the value of the specified joints."""
-        clear_value = False if register in ('present_position', 'present_temperature') else True
+        clear_value = False if register in ('present_position', 'temperature') else True
 
         dxl_names = [name for name in joint_names if name in self.dxls]
         dxl_values = dict(zip(dxl_names, self.get_dxls_value(register, dxl_names, clear_value)))

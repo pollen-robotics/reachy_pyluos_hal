@@ -18,7 +18,7 @@ class Joint(ABC):
         'moving_speed'
         'torque_limit'
         'present_position'
-        'present_temperature'
+        'temperature'
     """
 
     def __init__(self, register_config: Dict[str,

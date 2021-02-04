@@ -36,7 +36,7 @@ class JointLuos(JointABC):
 
     def get_joint_temperatures(self, names: List[str]) -> List[float]:
         """Return the current temperature (in C) of the specified joints."""
-        return self.reachy.get_joints_value(register='present_temperature', joint_names=names)
+        return self.reachy.get_joints_value(register='temperature', joint_names=names)
 
     def get_goal_positions(self, names: List[str]) -> List[float]:
         """Return the goal position (in rad/s) of the specified joints."""

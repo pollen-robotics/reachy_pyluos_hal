@@ -24,7 +24,7 @@ class DynamixelMotor(Joint):
             'moving_speed': (self.speed_to_usi, self.speed_to_raw),
             'torque_limit': (self.torque_to_usi, self.torque_to_raw),
             'present_position': (self.position_to_usi, self.position_to_raw),
-            'present_temperature': (self.temperature_to_usi, self.temperature_to_raw),
+            'temperature': (self.temperature_to_usi, self.temperature_to_raw),
         })
 
     @abstractproperty
@@ -129,7 +129,7 @@ class DynamixelMotorV1(DynamixelMotor):
         'moving_speed': (32, 2),
         'torque_limit': (34, 2),
         'present_position': (36, 2),
-        'present_temperature': (43, 1),
+        'temperature': (43, 1),
     }
 
 
@@ -142,7 +142,7 @@ class DynamixelMotorV2(DynamixelMotor):
         'moving_speed': (32, 2),
         'torque_limit': (35, 2),
         'present_position': (37, 2),
-        'present_temperature': (46, 1),
+        'temperature': (46, 1),
     }
 
 
