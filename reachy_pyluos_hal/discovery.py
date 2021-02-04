@@ -1,5 +1,6 @@
 """Discover utility functions to find the correct serial port where the given devices are connected."""
 
+from reachy_pyluos_hal.fan import Fan
 from reachy_pyluos_hal.orbita import OrbitaActuator
 from typing import Dict, List, Tuple
 
@@ -58,6 +59,8 @@ def corresponding_containers(
         elif isinstance(dev, OrbitaActuator):
             container_type = 'ControllerMotor'
             basename = 'orbita'
+        elif isinstance(dev, Fan):
+            continue
         else:
             missing.append(dev)
             continue

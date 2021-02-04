@@ -24,6 +24,9 @@ class GateProtocol(Protocol):
     MSG_TYPE_DXL_SET_REG = 11
     MSG_TYPE_DXL_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
+    MSG_TYPE_FAN_GET_STATE = 30
+    MSG_TYPE_FAN_SET_STATE = 31
+    MSG_TYPE_FAN_PUB_DATA = 35
     MSG_TYPE_ORBITA_GET_REG = 50
     MSG_TYPE_ORBITA_SET_REG = 51
     MSG_TYPE_ORBITA_PUB_DATA = 55
@@ -122,6 +125,17 @@ class GateProtocol(Protocol):
             msg += [motor_id] + list(value)
         self.send_msg(bytes(msg))
 
+    def send_fan_get(self, fans: List[int]):
+        """Send a fan get message [MSG_TYPE_FAN_GET_STATE, (FAN_ID)+]."""
+        self.send_msg(bytes([self.MSG_TYPE_FAN_GET_STATE] + fans))
+
+    def send_fan_set(self, state_for_fan: Dict[int, int]):
+        """Send a fan set message [MSG_TYPE_FAN_SET_STATE, (FAN_ID, STATE)+]."""
+        msg = [self.MSG_TYPE_FAN_SET_STATE]
+        for fan_id, fan_state in state_for_fan.items():
+            msg += [fan_id, fan_state]
+        self.send_msg(bytes(msg))
+
     def pop_messages(self) -> Iterable[bytearray]:
         """Parse buffer and check for complete messages."""
         msgs = []
@@ -185,6 +199,12 @@ class GateProtocol(Protocol):
             reg_type = payload[2]
             self.handle_orbita_pub_data(orbita_id, OrbitaRegister(reg_type), payload[3:])
 
+        elif payload[0] == self.MSG_TYPE_FAN_PUB_DATA:
+            data = list(payload[1:])
+            ids = data[::2]
+            states = data[1::2]
+            self.handle_fan_pub_data(ids, states)
+
         elif payload[0] == self.MSG_DETECTION_PUB_NODES:
             self._nodes.clear()
             self._containers.clear()
@@ -227,6 +247,10 @@ class GateProtocol(Protocol):
 
     def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
         """Handle orbita update received on a gate client."""
+        raise NotImplementedError
+
+    def handle_fan_pub_data(self, fan_ids: List[int], states: List[int]):
+        """Handle fan state update received on a gate client."""
         raise NotImplementedError
 
     def handle_assert(self, msg: bytes):

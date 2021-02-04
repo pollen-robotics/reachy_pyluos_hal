@@ -2,7 +2,7 @@
 
 import sys
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from logging import Logger
 from glob import glob
 from math import pi
@@ -14,6 +14,7 @@ from collections import OrderedDict, defaultdict
 from .device import Device
 from .discovery import find_gate
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18, XL320
+from .fan import Fan
 from .force_sensor import ForceSensor
 from .joint import Joint
 from .orbita import OrbitaActuator, OrbitaRegister
@@ -25,22 +26,28 @@ class Reachy(GateProtocol):
 
     devices: List[Dict[str, Device]] = [
         OrderedDict([
+            ('r_shoulder_fan', Fan(id=10)),
             ('r_shoulder_pitch', MX106(id=10, offset=pi/2, direct=False)),
             ('r_shoulder_roll', MX64(id=11, offset=pi/2, direct=False)),
             ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
+            ('r_elbow_fan', Fan(id=13)),
             ('r_elbow_pitch', MX64(id=13, offset=0.0, direct=False)),
             ('r_forearm_yaw', AX18(id=14, offset=0.0, direct=False)),
+            ('r_wrist_fan', Fan(id=15)),
             ('r_wrist_pitch', MX28(id=15, offset=0.0, direct=False)),
             ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
             ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
             ('r_force_gripper', ForceSensor(id=10)),
         ]),
         OrderedDict([
+            ('l_shoulder_fan', Fan(id=20)),
             ('l_shoulder_pitch', MX106(id=20, offset=pi/2, direct=True)),
             ('l_shoulder_roll', MX64(id=21, offset=-pi/2, direct=False)),
             ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
+            ('l_elbow_fan', Fan(id=23)),
             ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
             ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
+            ('l_wrist_fan', Fan(id=25)),
             ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
             ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
             ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
@@ -78,6 +85,10 @@ class Reachy(GateProtocol):
                 with _self.lock:
                     return self.handle_orbita_pub_data(id, register, values)
 
+            def handle_fan_pub_data(_self, fan_ids: List[int], states: List[int]):
+                with _self.lock:
+                    return self.handle_fan_pub_data(fan_ids, states)
+
             def handle_assert(_self, msg: bytes):
                 with _self.lock:
                     return self.handle_assert(msg)
@@ -86,6 +97,9 @@ class Reachy(GateProtocol):
         self.gate4name: Dict[str, GateClient] = {}
         self.dxls: Dict[str, Joint] = OrderedDict({})
         self.dxl4id: Dict[int, DynamixelMotor] = {}
+
+        self.fans: Dict[str, Fan] = {}
+        self.fan4id: Dict[int, Fan] = {}
 
         self.orbita4id: Dict[int, OrbitaActuator] = {}
         self.orbitas: Dict[str, OrbitaActuator] = OrderedDict({})
@@ -119,6 +133,9 @@ class Reachy(GateProtocol):
                 if isinstance(dev, OrbitaActuator):
                     self.orbita4id[dev.id] = dev
                     self.orbitas[name] = dev
+                if isinstance(dev, Fan):
+                    self.fans[name] = dev
+                    self.fan4id[dev.id] = dev
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -291,6 +308,31 @@ class Reachy(GateProtocol):
         }
         gate.protocol.send_orbita_set(orbita.id, register.value, value_for_id)
 
+    def get_fans_state(self, fan_names: List[str]) -> List[float]:
+        """Retrieve state for the specified fans."""
+        fans_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
+
+        for fan in fan_names:
+            self.fans[fan].state.reset()
+            fans_per_gate[self.gate4name[fan]].append(self.fans[fan].id)
+
+        for gate, ids in fans_per_gate.items():
+            gate.protocol.send_fan_get(ids)
+
+        return [self.fans[name].state.get_as_usi() for name in fan_names]
+
+    def set_fans_state(self, state_for_fan: Dict[str, float]):
+        """Set state for the specified fans."""
+        fans_per_gate: Dict[GateClient, Dict[int, float]] = defaultdict(dict)
+
+        for name, state in state_for_fan.items():
+            fan = self.fans[name]
+            fan.state.update_using_usi(state)
+            fans_per_gate[self.gate4name[name]][fan.id] = state
+
+        for gate, values in fans_per_gate.items():
+            gate.protocol.send_fan_set(values)
+
     def _is_torque_enable(self, name: str) -> bool:
         return self.get_dxls_value('torque_enable', [name], clear_value=False)[0] == 1
 
@@ -311,6 +353,11 @@ class Reachy(GateProtocol):
     def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
         """Handle orbita update received on a gate client."""
         self.orbita4id[orbita_id].update_value(reg_type, values)
+
+    def handle_fan_pub_data(self, fan_ids: List[int], states: List[int]):
+        """Handle fan state update received on a gate client."""
+        for id, state in zip(fan_ids, states):
+            self.fan4id[id].state.update_using_usi(state)
 
     def handle_assert(self, msg: bytes):
         """Handle an assertion received on a gate client."""
