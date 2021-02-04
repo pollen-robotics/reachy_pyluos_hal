@@ -29,6 +29,7 @@ class DynamixelMotor(Joint):
 
     @abstractproperty
     def dxl_config(self) -> Dict[str, Tuple[int, int]]:
+        """Get registers config: Dict[reg_name, (reg_addr, reglength)]."""
         ...
 
     def __repr__(self) -> str:
@@ -121,6 +122,7 @@ class DynamixelMotor(Joint):
 
 class DynamixelMotorV1(DynamixelMotor):
     """Specific motor using protocol V1 registers."""
+
     dxl_config = {
         'torque_enable': (24, 1),
         'goal_position': (30, 2),
@@ -133,6 +135,7 @@ class DynamixelMotorV1(DynamixelMotor):
 
 class DynamixelMotorV2(DynamixelMotor):
     """Specific motor using protocol V2 registers."""
+
     dxl_config = {
         'torque_enable': (24, 1),
         'goal_position': (30, 2),
