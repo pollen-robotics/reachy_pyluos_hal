@@ -141,7 +141,7 @@ class Reachy(GateProtocol):
         """Start all GateClients (start sending/receiving data with hardware)."""
         for gate in self.gates:
             gate.start()
-
+            gate.protocol.logger = self.logger
         self.setup()
 
     def stop(self):
