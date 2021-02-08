@@ -80,3 +80,20 @@ def find_container(container_id: int, container_type: str, basename: str, luos_c
         if c.type == container_type and c.alias == f'{basename}_{container_id}':
             return True
     return False
+
+
+if __name__ == '__main__':
+    import sys
+    from glob import glob
+
+    if sys.platform == 'linux':
+        port_template = '/dev/ttyUSB*'
+    elif sys.platform == 'darwin':
+        port_template = '/dev/tty.usb*'
+    else:
+        raise SystemError
+
+    for port in glob(port_template):
+        print(port)
+        print(identify_luos_containers(port))
+        print()
