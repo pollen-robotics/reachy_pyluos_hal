@@ -38,6 +38,7 @@ def identify_luos_containers(port: str) -> Dict[int, List[LuosContainer]]:
 
     with Serial(port, baudrate=1000000) as s:
         with ReaderThread(s, GateHandler) as p:
+            p.send_detection_run_signal()
             return p.send_detection_signal()
 
 

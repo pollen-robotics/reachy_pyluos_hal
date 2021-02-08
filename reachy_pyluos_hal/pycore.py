@@ -77,6 +77,9 @@ class GateProtocol(Protocol):
         if self.logger is not None:
             self.logger.debug(f'Sending {list(data)}')
         self.transport.write(data)
+    def send_detection_run_signal(self) -> None:
+        """Send request to run a Luos detection from the gate."""
+        self.send_msg(bytes([self.MSG_DETECTION_RUN]))
 
     def send_detection_signal(self) -> Dict[int, List[LuosContainer]]:
         """Send request to the gate to retrieve all nodes/containers info."""
@@ -211,6 +214,9 @@ class GateProtocol(Protocol):
 
             self._numbers_of_nodes_waiting = len(payload) - 1
             self._waiting_for_containers = {}
+
+            if self._numbers_of_nodes_waiting == 0:
+                self._waiting_for_nodes.set()
 
             for node_id in payload[1:]:
                 self._nodes[node_id] = []
