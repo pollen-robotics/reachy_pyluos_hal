@@ -37,6 +37,7 @@ class GateProtocol(Protocol):
     MSG_DETECTION_PUB_NODES = 215
     MSG_DETECTION_PUB_CONTAINERS = 216
     MSG_DETECTION_PUB_CONTAINER_INFO = 217
+    MSG_DETECTION_RUN = 218
     MSG_MODULE_ASSERT = 222
 
     logger: Optional[Logger] = None
