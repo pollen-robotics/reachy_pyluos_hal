@@ -22,8 +22,8 @@ class OrbitaRegister(Enum):
     absolute_position = 13
 
     goal_position = 20
-    max_speed = 21
-    max_torque = 22
+    moving_speed = 21
+    torque_limit = 22
 
     torque_enable = 30
     pid = 31
@@ -103,7 +103,7 @@ class OrbitaDisk:
 
         self.present_position = Register(self.position_as_usi, self.position_as_raw)
         self.goal_position = Register(self.position_as_usi, self.position_as_raw)
-        self.max_torque = Register(self.max_torque_as_usi, self.max_torque_as_raw)
+        self.torque_limit = Register(self.max_torque_as_usi, self.max_torque_as_raw)
         self.temperature = Register(self.temperature_as_usi, self.temperature_as_raw)
         self.temperature_shutdown = Register(self.temperature_as_usi, self.temperature_as_raw)
         self.torque_enable = Register(self.torque_enable_as_usi, self.torque_enable_as_raw)

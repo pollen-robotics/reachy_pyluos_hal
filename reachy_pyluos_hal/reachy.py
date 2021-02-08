@@ -175,15 +175,24 @@ class Reachy(GateProtocol):
         dxl_values = dict(zip(dxl_names, self.get_dxls_value(register, dxl_names, clear_value)))
 
         orbitas_values = {}
-        for name in joint_names:
-            orbita_name = name.partition('_')[0]
-            if orbita_name in self.orbitas:
-                disk_values = self.get_orbita_values(register, orbita_name, clear_value)
-                for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
-                    orbitas_values[f'{orbita_name}_{disk}'] = val
-                orbitas_values[f'{orbita_name}_roll'] = 0.0
-                orbitas_values[f'{orbita_name}_pitch'] = 0.0
-                orbitas_values[f'{orbita_name}_yaw'] = 0.0
+
+        if register in ['moving_speed']:
+            for name in joint_names:
+                orbita_name = name.partition('_')[0]
+                if orbita_name in self.orbitas:
+                    orbita = self.orbitas[orbita_name]
+                    for disk in orbita.get_joints_name():
+                        orbitas_values[f'{orbita_name}_{disk}'] = 0.0
+        else:
+            for name in joint_names:
+                orbita_name = name.partition('_')[0]
+                if orbita_name in self.orbitas:
+                    disk_values = self.get_orbita_values(register, orbita_name, clear_value)
+                    for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
+                        orbitas_values[f'{orbita_name}_{disk}'] = val
+                    orbitas_values[f'{orbita_name}_roll'] = 0.0
+                    orbitas_values[f'{orbita_name}_pitch'] = 0.0
+                    orbitas_values[f'{orbita_name}_yaw'] = 0.0
 
         values = {}
         values.update(dxl_values)
