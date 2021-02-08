@@ -127,7 +127,8 @@ class OrbitaDisk:
         ]
         distances = [abs(raw_pos - poss) for poss in possibilities]
         closest = np.argmin(distances)
-        self.offset = possibilities[closest]
+        self.offset = 0
+        self.offset = possibilities[closest] + self.encoder_position_as_usi(self.position_as_raw(np.deg2rad(60)))
 
     def encoder_position_as_raw(self, val: int) -> bytes:
         """Convert encoder value to raw."""
@@ -149,7 +150,7 @@ class OrbitaDisk:
         rads = val * self.reduction
         encoder_value = rads * self.resolution / (2 * pi)
         encoder_value += self.offset
-        encoder_value = round(encoder_value)
+        encoder_value = int(round(encoder_value))
         return struct.pack('i', encoder_value)
 
     def temperature_as_usi(self, val: bytes) -> float:

@@ -43,7 +43,7 @@ class GateProtocol(Protocol):
     logger: Optional[Logger] = None
     header = bytes([255, 255])
 
-    def __init__(self, timeout: float = 0.5) -> None:
+    def __init__(self, timeout: float = 5.0) -> None:
         """Prepare the input buffer."""
         self.transport: Optional[ReaderThread] = None
         self.buffer = bytearray()
