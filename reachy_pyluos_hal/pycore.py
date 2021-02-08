@@ -168,7 +168,7 @@ class GateProtocol(Protocol):
     def handle_message(self, payload: bytes):
         """Handle the reception of a complete message."""
         if self.logger is not None:
-            self.logger.info(f'Got msg {list(payload)}')
+            self.logger.debug(f'Got msg {list(payload)}')
 
         if payload[0] == self.MSG_MODULE_ASSERT:
             self.handle_assert(payload[1:])
