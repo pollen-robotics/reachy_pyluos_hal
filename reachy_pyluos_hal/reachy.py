@@ -181,9 +181,9 @@ class Reachy(GateProtocol):
                 disk_values = self.get_orbita_values(register, orbita_name, clear_value)
                 for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
                     orbitas_values[f'{orbita_name}_{disk}'] = val
-                orbitas_values[f'{orbita_name}_roll'] = 0
-                orbitas_values[f'{orbita_name}_pitch'] = 0
-                orbitas_values[f'{orbita_name}_yaw'] = 0
+                orbitas_values[f'{orbita_name}_roll'] = 0.0
+                orbitas_values[f'{orbita_name}_pitch'] = 0.0
+                orbitas_values[f'{orbita_name}_yaw'] = 0.0
 
         values = {}
         values.update(dxl_values)
