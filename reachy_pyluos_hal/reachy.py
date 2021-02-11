@@ -22,7 +22,7 @@ from .pycore import GateClient, GateProtocol
 
 
 class Reachy(GateProtocol):
-    """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
+    """Reachy wrapper around serial GateClients which handle the communication with the hardware."""
 
     devices: List[Dict[str, Device]] = [
         OrderedDict([
@@ -158,12 +158,17 @@ class Reachy(GateProtocol):
         for gate in self.gates:
             gate.stop()
 
-    def setup(self):
+    def setup(self, retry=3):
         """Set up everything before actually using (eg. offset for instance)."""
-        for name, orbita in self.orbitas.items():
-            zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True)]
-            pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True)]
-            orbita.set_offset(zero, pos)
+        try:
+            for name, orbita in self.orbitas.items():
+                zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True)]
+                pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True)]
+                orbita.set_offset(zero, pos)
+        except TimeoutError as e:
+            if retry == 0:
+                raise e
+            self.setup(retry - 1)
 
     def get_all_joints_names(self) -> List[str]:
         """Return the names of all joints."""
