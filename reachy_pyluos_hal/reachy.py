@@ -62,7 +62,7 @@ class Reachy(GateProtocol):
     if sys.platform == 'linux':
         port_template: str = '/dev/ttyUSB*'
     elif sys.platform == 'darwin':
-        port_template: str = '/dev/tty.usb*'
+        port_template: str = '/dev/tty.usbserial*'
     else:
         raise OSError('Unsupported platform')
 

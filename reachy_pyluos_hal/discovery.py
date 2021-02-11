@@ -89,7 +89,7 @@ if __name__ == '__main__':
     if sys.platform == 'linux':
         port_template = '/dev/ttyUSB*'
     elif sys.platform == 'darwin':
-        port_template = '/dev/tty.usb*'
+        port_template = '/dev/tty.usbserial*'
     else:
         raise SystemError
 
