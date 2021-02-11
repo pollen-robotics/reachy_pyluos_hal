@@ -11,7 +11,7 @@ class ForceSensor:
     def __init__(self, id: int) -> None:
         """Wrap a force Register."""
         self.id = id
-        self.force = Register(self.cvt_as_usi, self.cvt_as_raw)
+        self.force = Register(self.cvt_as_usi, self.cvt_as_raw, timeout=1.0)
 
     def __repr__(self) -> str:
         """Represent force sensor."""
