@@ -293,6 +293,7 @@ class GateClient:
             while self.alive.is_set():
                 protocol.send_keep_alive()
                 time.sleep(1)
+            time.sleep(0.5 + self.protocol.timeout)
 
     def stop(self):
         """Stop the ReaderThread loop and wait for it to finish."""
