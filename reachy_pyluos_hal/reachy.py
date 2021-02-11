@@ -113,9 +113,9 @@ class Reachy(GateProtocol):
 
         for devices in self.devices:
             self.logger.info(f'Looking for {list(devices.keys())} on {self.ports}.')
-            port, matching, missing = find_gate(devices, self.ports)
+            port, matching, missing = find_gate(devices, self.ports, self.logger)
             if len(missing) > 0:
-                raise IOError(f'Could not find given devices {missing}!')
+                raise MissingContainerError(missing)
 
             self.logger.info(f'Found devices on="{port}", connecting...')
 
@@ -136,6 +136,15 @@ class Reachy(GateProtocol):
                 if isinstance(dev, Fan):
                     self.fans[name] = dev
                     self.fan4id[dev.id] = dev
+
+    def __enter__(self):
+        """Enter context handler."""
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop and close."""
+        self.stop()
 
     def start(self):
         """Start all GateClients (start sending/receiving data with hardware)."""
@@ -371,3 +380,11 @@ class Reachy(GateProtocol):
     def handle_assert(self, msg: bytes):
         """Handle an assertion received on a gate client."""
         raise AssertionError(msg)
+
+
+class MissingContainerError(Exception):
+    """Custom exception for missing container."""
+
+    def __init__(self, missing: List[Device]):
+        """Set up the missing container execption."""
+        super().__init__(f'Could not find given devices {missing}!')

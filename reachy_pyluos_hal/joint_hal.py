@@ -15,8 +15,18 @@ class JointLuos(JointABC):
         """Create and start Reachy which wraps serial Luos GateClients."""
         self.logger = logger
 
-        self.reachy = Reachy(self.logger)
         self.reachy.start()
+
+    def __enter__(self):
+        """Enter context handler."""
+        self.reachy = Reachy(self.logger)
+        self.reachy.__enter__()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop and close."""
+        self.reachy.stop()
 
     def get_all_joint_names(self) -> List[str]:
         """Return the names of all joints."""

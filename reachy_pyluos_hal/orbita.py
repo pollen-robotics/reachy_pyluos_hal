@@ -53,6 +53,10 @@ class OrbitaActuator:
         self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
 
+    def __str__(self) -> str:
+        """Get Orbita Actuator string representation."""
+        return f'<OrbitaActuator id={self.id}>'
+
     def get_disks_name(self) -> List[str]:
         """Get the name of each disk."""
         return [d.name for d in self.disks]

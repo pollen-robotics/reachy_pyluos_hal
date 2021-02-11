@@ -1,8 +1,11 @@
 """Discover utility functions to find the correct serial port where the given devices are connected."""
 
+import time
+
+from logging import Logger
 from reachy_pyluos_hal.fan import Fan
 from reachy_pyluos_hal.orbita import OrbitaActuator
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from serial import Serial
 from serial.threaded import ReaderThread
@@ -13,24 +16,27 @@ from .force_sensor import ForceSensor
 from .pycore import GateProtocol, LuosContainer
 
 
-def find_gate(devices: Dict[str, Device], ports: List[str]) -> Tuple[str, List[Device], List[Device]]:
+def find_gate(devices: Dict[str, Device], ports: List[str], logger: Optional[Logger], retry: int = 3) -> Tuple[str, List[Device], List[Device]]:
     """Try to identify the correct gate among possible serial ports based on the identified luos device."""
     solutions = {}
 
     for port in ports:
-        containers: List[LuosContainer] = sum(identify_luos_containers(port).values(), [])
+        containers: List[LuosContainer] = sum(identify_luos_containers(port, logger).values(), [])
 
         matching, missing = corresponding_containers(devices, containers)
         solutions[port] = (matching, missing)
         if len(missing) == 0:
             return (port, matching, missing)
 
+    if retry > 0:
+        return find_gate(devices, ports, logger, retry - 1)
+
     best_solution = sorted(solutions.items(), key=lambda item: len(item[1][1]))[0]
     port, (matching, missing) = best_solution
     return (port, matching, missing)
 
 
-def identify_luos_containers(port: str) -> Dict[int, List[LuosContainer]]:
+def identify_luos_containers(port: str, logger: Optional[Logger] = None) -> Dict[int, List[LuosContainer]]:
     """Found which luos containers are connected to the serial port."""
     class GateHandler(GateProtocol):
         def handle_assert(self, msg):
@@ -38,8 +44,11 @@ def identify_luos_containers(port: str) -> Dict[int, List[LuosContainer]]:
 
     with Serial(port, baudrate=1000000) as s:
         with ReaderThread(s, GateHandler) as p:
+            p.logger = logger
             p.send_detection_run_signal()
-            return p.send_detection_signal()
+            containers = p.send_detection_signal()
+            time.sleep(p.timeout)
+            return containers
 
 
 def corresponding_containers(
