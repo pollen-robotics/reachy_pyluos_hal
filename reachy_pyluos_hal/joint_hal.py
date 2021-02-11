@@ -24,6 +24,10 @@ class JointLuos(JointABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop and close."""
+        self.stop()
+
+    def stop(self) -> None:
+        """Stop and close."""
         self.reachy.stop()
 
     def get_all_joint_names(self) -> List[str]:
