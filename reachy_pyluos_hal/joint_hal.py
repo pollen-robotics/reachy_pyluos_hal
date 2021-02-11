@@ -15,8 +15,6 @@ class JointLuos(JointABC):
         """Create and start Reachy which wraps serial Luos GateClients."""
         self.logger = logger
 
-        self.reachy.start()
-
     def __enter__(self):
         """Enter context handler."""
         self.reachy = Reachy(self.logger)
