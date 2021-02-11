@@ -78,6 +78,7 @@ class GateProtocol(Protocol):
         if self.logger is not None:
             self.logger.debug(f'Sending {list(data)}')
         self.transport.write(data)
+
     def send_detection_run_signal(self) -> None:
         """Send request to run a Luos detection from the gate."""
         self.send_msg(bytes([self.MSG_DETECTION_RUN]))
@@ -296,4 +297,6 @@ class GateClient:
     def stop(self):
         """Stop the ReaderThread loop and wait for it to finish."""
         self.alive.clear()
-        self.t.join()
+        # Make sure all messages buffered by the gate were received.
+        if hasattr(self, 't') and self.t.is_alive():
+            self.t.join()
