@@ -105,7 +105,7 @@ class DynamixelMotor(Joint):
 
     def torque_to_raw(self, value: float) -> bytes:
         """Convert torque (in %) to raw."""
-        return pack('H', clip(value, 0, 100) * 10.23)
+        return pack('H', int(round(clip(value, 0, 100) * 10.23)))
 
     def torque_to_usi(self, value: bytes) -> float:
         """Convert torque to usi (in %)."""
