@@ -158,17 +158,12 @@ class Reachy(GateProtocol):
         for gate in self.gates:
             gate.stop()
 
-    def setup(self, retry=3):
+    def setup(self):
         """Set up everything before actually using (eg. offset for instance)."""
-        try:
-            for name, orbita in self.orbitas.items():
-                zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True)]
-                pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True)]
-                orbita.set_offset(zero, pos)
-        except TimeoutError as e:
-            if retry == 0:
-                raise e
-            self.setup(retry - 1)
+        for name, orbita in self.orbitas.items():
+            zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True, retry=3)]
+            pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True, retry=3)]
+            orbita.set_offset(zero, pos)
 
     def get_all_joints_names(self) -> List[str]:
         """Return the names of all joints."""
@@ -181,12 +176,13 @@ class Reachy(GateProtocol):
 
         return dxl_names + orbita_disk_names
 
-    def get_joints_value(self, register: str, joint_names: List[str]) -> List[float]:
+    def get_joints_value(self, register: str, joint_names: List[str], retry: int = 3) -> List[float]:
         """Return the value of the specified joints."""
+        # TODO: both get (dxl and orbita) should run in parallel (via asyncio?)
         clear_value = False if register in ('present_position', 'temperature') else True
 
         dxl_names = [name for name in joint_names if name in self.dxls]
-        dxl_values = dict(zip(dxl_names, self.get_dxls_value(register, dxl_names, clear_value)))
+        dxl_values = dict(zip(dxl_names, self.get_dxls_value(register, dxl_names, clear_value, retry)))
 
         orbitas_values = {}
 
@@ -201,7 +197,7 @@ class Reachy(GateProtocol):
             for name in joint_names:
                 orbita_name = name.partition('_')[0]
                 if orbita_name in self.orbitas:
-                    disk_values = self.get_orbita_values(register, orbita_name, clear_value)
+                    disk_values = self.get_orbita_values(register, orbita_name, clear_value, retry)
                     for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
                         orbitas_values[f'{orbita_name}_{disk}'] = val
                     orbitas_values[f'{orbita_name}_roll'] = 0.0
@@ -239,7 +235,7 @@ class Reachy(GateProtocol):
             for orbita, values in orbita_values.items():
                 self.set_orbita_values(register, orbita, values)
 
-    def get_dxls_value(self, register: str, dxl_names: List[str], clear_value: bool) -> List[float]:
+    def get_dxls_value(self, register: str, dxl_names: List[str], clear_value: bool, retry: int) -> List[float]:
         """Retrieve register value on the specified dynamixels.
 
         The process is done as follows.
@@ -265,10 +261,15 @@ class Reachy(GateProtocol):
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
-        return [
-            self.dxls[name].get_value_as_usi(register)
-            for name in dxl_names
-        ]
+        try:
+            return [
+                self.dxls[name].get_value_as_usi(register)
+                for name in dxl_names
+            ]
+        except TimeoutError as e:
+            if retry == 0:
+                raise e
+            return self.get_dxls_value(register, dxl_names, clear_value, retry - 1)
 
     def set_dxls_value(self, register: str, values_for_dxls: Dict[str, float]):
         """Set new value for register on the specified dynamixels.
@@ -296,11 +297,11 @@ class Reachy(GateProtocol):
 
         if register == 'torque_enable':
             names = [name for name, value in values_for_dxls.items() if value == 1]
-            cached_speed = dict(zip(names, self.get_dxls_value('moving_speed', names, clear_value=False)))
+            cached_speed = dict(zip(names, self.get_dxls_value('moving_speed', names, clear_value=False, retry=3)))
             self.set_dxls_value('moving_speed', cached_speed)
-            self.get_dxls_value('goal_position', names, clear_value=True)
+            self.get_dxls_value('goal_position', names, clear_value=True, retry=3)
 
-    def get_orbita_values(self, register_name: str, orbita_name: str, clear_value: bool) -> List[float]:
+    def get_orbita_values(self, register_name: str, orbita_name: str, clear_value: bool, retry: int) -> List[float]:
         """Retrieve register value on the specified orbita actuator."""
         orbita = self.orbitas[orbita_name]
         register = OrbitaActuator.register_address[register_name]
@@ -314,7 +315,12 @@ class Reachy(GateProtocol):
                 register=register.value,
             )
 
-        return orbita.get_value_as_usi(register)
+        try:
+            return orbita.get_value_as_usi(register)
+        except TimeoutError as e:
+            if retry == 0:
+                raise e
+            return self.get_orbita_values(register_name, orbita_name, clear_value, retry - 1)
 
     def set_orbita_values(self, register_name: str, orbita_name: str, value_for_disks: Dict[str, float]):
         """Set new value for register on the specified disks."""
@@ -357,7 +363,7 @@ class Reachy(GateProtocol):
             gate.protocol.send_fan_set(values)
 
     def _is_torque_enable(self, name: str) -> bool:
-        return self.get_dxls_value('torque_enable', [name], clear_value=False)[0] == 1
+        return self.get_dxls_value('torque_enable', [name], clear_value=False, retry=3)[0] == 1
 
     def handle_dxl_pub_data(self, addr: int, ids: List[int], errors: List[int], values: List[bytes]):
         """Handle dxl update received on a gate client."""

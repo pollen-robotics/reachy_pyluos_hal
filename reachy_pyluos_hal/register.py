@@ -12,7 +12,7 @@ class Register:
     def __init__(self,
                  cvt_as_usi: Callable[[bytes], float],
                  cvt_as_raw: Callable[[float], bytes],
-                 timeout: float = 0.5,
+                 timeout: float = 0.01,
                  ) -> None:
         """Set up the register with a None value by default."""
         self.val: Union[bytes, None] = None
