@@ -55,7 +55,7 @@ class GateProtocol(Protocol):
     def connection_made(self, transport: ReaderThread):
         """Handle connection made."""
         if self.logger is not None:
-            self.logger.info(f'Connection made with {transport}')
+            self.logger.debug(f'Connection made with {transport}')
         self.transport = transport
 
         if self.transport.serial.in_waiting > 0:
@@ -68,7 +68,7 @@ class GateProtocol(Protocol):
         if isinstance(exc, Exception):
             raise exc
         if self.logger is not None:
-            self.logger.info(f'Connection closed.')
+            self.logger.debug(f'Connection closed.')
 
     def data_received(self, data: bytearray):
         """Handle new received data."""
