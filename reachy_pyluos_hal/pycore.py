@@ -59,14 +59,16 @@ class GateProtocol(Protocol):
         self.transport = transport
 
         if self.transport.serial.in_waiting > 0:
-            self.logger.warning('Need flushing before actual start...')
+            if self.logger is not None:
+                self.logger.warning('Need flushing before actual start...')
             self.transport.serial.read(self.transport.serial.in_waiting)
 
     def connection_lost(self, exc: Optional[Exception]):
         """Handle connection lost."""
         if isinstance(exc, Exception):
             raise exc
-        self.logger.info(f'Connection closed.')
+        if self.logger is not None:
+            self.logger.info(f'Connection closed.')
 
     def data_received(self, data: bytearray):
         """Handle new received data."""
@@ -164,7 +166,6 @@ class GateProtocol(Protocol):
 
             msg = self.buffer[3: 3 + payload_size]
             msgs.append(msg)
-
             self.buffer = self.buffer[3 + payload_size:]
 
         return msgs

@@ -269,6 +269,11 @@ class Reachy(GateProtocol):
                 for name in dxl_names
             ]
         except TimeoutError as e:
+            missing_dxls = [
+                name for name in dxl_names
+                if not self.dxls[name].is_value_set(register)
+            ]
+            self.logger.warning(f'Timeout occurs after GET cmd: dev="{missing_dxls}" reg="{register}"!')
             if retry == 0:
                 raise e
             return self.get_dxls_value(register, dxl_names, clear_value, retry - 1)
@@ -320,6 +325,7 @@ class Reachy(GateProtocol):
         try:
             return orbita.get_value_as_usi(register)
         except TimeoutError as e:
+            self.logger.warning(f'Timeout occurs after GET cmd: dev="{orbita_name}" reg="{register_name}"!')
             if retry == 0:
                 raise e
             return self.get_orbita_values(register_name, orbita_name, clear_value, retry - 1)
