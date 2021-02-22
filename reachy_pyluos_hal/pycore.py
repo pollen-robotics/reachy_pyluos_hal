@@ -55,13 +55,20 @@ class GateProtocol(Protocol):
     def connection_made(self, transport: ReaderThread):
         """Handle connection made."""
         if self.logger is not None:
-            self.logger.info(f'Connection made with {transport}')
+            self.logger.debug(f'Connection made with {transport}')
         self.transport = transport
+
+        if self.transport.serial.in_waiting > 0:
+            if self.logger is not None:
+                self.logger.warning('Need flushing before actual start...')
+            self.transport.serial.read(self.transport.serial.in_waiting)
 
     def connection_lost(self, exc: Optional[Exception]):
         """Handle connection lost."""
         if isinstance(exc, Exception):
             raise exc
+        if self.logger is not None:
+            self.logger.debug(f'Connection closed.')
 
     def data_received(self, data: bytearray):
         """Handle new received data."""
@@ -148,7 +155,10 @@ class GateProtocol(Protocol):
         while True:
             if len(self.buffer) < 3:
                 break
-            assert self.buffer[0] == self.buffer[1] == 255
+            if self.buffer[0] != 255 or self.buffer[1] != 255:
+                data = self.transport.serial.read(self.transport.serial.in_waiting)
+                self.buffer.extend(data)
+                raise IOError(f'Corrupted buffer {self.buffer}')
 
             payload_size = self.buffer[2]
             if len(self.buffer) < 3 + payload_size:
@@ -156,7 +166,6 @@ class GateProtocol(Protocol):
 
             msg = self.buffer[3: 3 + payload_size]
             msgs.append(msg)
-
             self.buffer = self.buffer[3 + payload_size:]
 
         return msgs
