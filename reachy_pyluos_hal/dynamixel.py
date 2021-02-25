@@ -1,12 +1,32 @@
 """Dynamixel implentation of a Joint."""
 
+import numpy as np
+
 from abc import abstractproperty
+from enum import Enum
 from numpy import clip, deg2rad, pi
 from struct import pack, unpack
-from typing import Dict, Tuple
-
+from typing import Dict, List, Tuple
 
 from .joint import Joint
+
+
+class DynamixelModelNumber(Enum):
+    AX18 = 18
+    MX28 = 29
+    MX64 = 310
+    MX106 = 320
+    XL320 = 350
+
+
+class DynamixelError(Enum):
+    InstructionError = 6
+    OverloadError = 5
+    ChecksumError = 4
+    RangeError = 3
+    OverheatingError = 2
+    AngleLimitError = 1
+    InputVoltageError = 0
 
 
 class DynamixelMotor(Joint):
@@ -19,6 +39,15 @@ class DynamixelMotor(Joint):
         self.direct = direct
 
         super().__init__({
+            'model_number': (self.model_to_usi, self.model_to_raw),
+            'id': (self.id_to_usi, self.id_to_raw),
+            'baudrate': (self.baudrate_to_usi, self.baudrate_to_raw),
+            'return_delay_time': (self.return_delay_time_to_usi, self.return_delay_time_to_raw),
+            'cw_angle_limit': (self.position_to_usi, self.position_to_raw),
+            'ccw_angle_limit': (self.position_to_usi, self.position_to_raw),
+            'temperature_limit': (self.temperature_to_usi, self.temperature_to_raw),
+            'alarm_shutdown': (self.alarm_to_usi, self.alarm_to_raw),
+
             'torque_enable': (self.torque_enabled_to_usi, self.torque_enabled_to_raw),
             'goal_position': (self.position_to_usi, self.position_to_raw),
             'moving_speed': (self.speed_to_usi, self.speed_to_raw),
@@ -61,6 +90,77 @@ class DynamixelMotor(Joint):
     def get_register_config(self, register: str) -> Tuple[int, int]:
         """Get register addr and length by its name."""
         return self.dxl_config[register]
+
+    def model_to_usi(self, value: bytes) -> DynamixelModelNumber:
+        """Convert model."""
+        model_number = unpack('H', value)[0]
+        return DynamixelModelNumber(value=model_number)
+
+    def model_to_raw(self, model: DynamixelModelNumber) -> bytes:
+        """Convert model."""
+        return pack('H', model.value)
+
+    def id_to_usi(self, value: bytes) -> int:
+        """Convert id to USI."""
+        return value[0]
+
+    def id_to_raw(self, id: int) -> bytes:
+        """Convert id to raw."""
+        if not (1 <= id <= 253):
+            raise ValueError(f'Id should be with range (1, 253): {id}!')
+
+        return bytes([id])
+
+    def baudrate_to_usi(self, value: bytes) -> int:
+        return {
+            0: 2000000,
+            1: 1000000,
+            3: 500000,
+            4: 400000,
+            7: 250000,
+            9: 200000,
+            16: 115200,
+            34: 57600,
+            103: 19200,
+            207: 9600,
+        }[value[0]]
+
+    def baudrate_to_raw(self, baudrate: int) -> bytes:
+        return bytes([{
+            2000000: 0,
+            1000000: 1,
+            500000: 3,
+            400000: 4,
+            250000: 7,
+            200000: 9,
+            115200: 16,
+            57600: 34,
+            19200: 103,
+            9600: 207
+        }[baudrate]])
+
+    def return_delay_time_to_usi(self, value: bytes) -> int:
+        """Convert return delay time to USI (µs)."""
+        return value[0] * 2
+
+    def return_delay_time_to_raw(self, rdt: int) -> bytes:
+        """Convert return delay time to raw."""
+        if not (0 <= rdt <= 508):
+            raise ValueError(f'Id should be with range (0, 508): {id}!')
+
+        return bytes([rdt // 2])
+
+    def alarm_to_usi(self, value: bytes) -> List[DynamixelError]:
+        error_indices = np.where(np.unpackbits(np.asarray(value[0], dtype=np.uint8))[::-1])[0]
+        return [DynamixelError(err) for err in error_indices]
+
+    def alarm_to_raw(self, errors: List[DynamixelError]) -> bytes:
+        value = 0
+
+        for err in errors:
+            value += 2 ** err.value
+
+        return bytes([value])
 
     def torque_enabled_to_raw(self, value: float) -> bytes:
         """Convert torque-enabled to raw."""
@@ -111,19 +211,28 @@ class DynamixelMotor(Joint):
         """Convert torque to usi (in %)."""
         return unpack('H', value)[0] / 10.23
 
-    def temperature_to_raw(self, value: float) -> bytes:
+    def temperature_to_raw(self, value: int) -> bytes:
         """Convert temperature (in C) to raw."""
         return bytes([clip(value, 0, 255)])
 
-    def temperature_to_usi(self, value: bytes) -> float:
+    def temperature_to_usi(self, value: bytes) -> int:
         """Convert temperature to usi (in C)."""
-        return float(value[0])
+        return int(value[0])
 
 
 class DynamixelMotorV1(DynamixelMotor):
     """Specific motor using protocol V1 registers."""
 
     dxl_config = {
+        'model_number': (0, 2),
+        'id': (3, 1),
+        'baudrate': (4, 1),
+        'return_delay_time': (5, 1),
+        'cw_angle_limit': (6, 2),
+        'ccw_angle_limit': (8, 2),
+        'temperature_limit': (11, 1),
+        'alarm_shutdown': (18, 1),
+
         'torque_enable': (24, 1),
         'goal_position': (30, 2),
         'moving_speed': (32, 2),
@@ -137,6 +246,15 @@ class DynamixelMotorV2(DynamixelMotor):
     """Specific motor using protocol V2 registers."""
 
     dxl_config = {
+        'model_number': (0, 2),
+        'id': (3, 1),
+        'baudrate': (4, 1),
+        'return_delay_time': (5, 1),
+        'cw_angle_limit': (6, 2),
+        'ccw_angle_limit': (8, 2),
+        'temperature_limit': (12, 1),
+        'alarm_shutdown': (18, 1),
+
         'torque_enable': (24, 1),
         'goal_position': (30, 2),
         'moving_speed': (32, 2),
@@ -223,3 +341,13 @@ class XL320(DynamixelMotorV2):
     def motor_type(self):
         """Return the motor type."""
         return 'XL320'
+
+
+def get_motor_from_model(model: DynamixelModelNumber) -> DynamixelMotor:
+    return {
+        DynamixelModelNumber.AX18: AX18,
+        DynamixelModelNumber.MX28: MX28,
+        DynamixelModelNumber.MX64: MX64,
+        DynamixelModelNumber.MX106: MX106,
+        DynamixelModelNumber.XL320: XL320,
+    }[model]
