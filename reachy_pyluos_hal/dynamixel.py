@@ -6,7 +6,7 @@ from abc import abstractproperty
 from enum import Enum
 from numpy import clip, deg2rad, pi
 from struct import pack, unpack
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Type
 
 from .joint import Joint
 
@@ -174,12 +174,14 @@ class DynamixelMotor(Joint):
         """Convert position (in rad) to raw."""
         value = (value + self.offset) * (1 if self.direct else -1)
         pos_ratio = (value + self.max_radian / 2) / self.max_radian
+        pos_ratio = np.clip(pos_ratio, 0, 1)
         dxl_raw_pos = int(round(pos_ratio * (self.max_position - 1), 0))
         return pack('H', dxl_raw_pos)
 
     def position_to_usi(self, value: bytes) -> float:
         """Convert position to usi (in rad)."""
         dxl_raw_pos = unpack('H', value)[0]
+        assert 0 <= dxl_raw_pos < self.max_position
         pos_ratio = dxl_raw_pos / (self.max_position - 1)
         pos = (pos_ratio * self.max_radian) - self.max_radian / 2
         return (pos if self.direct else -pos) - self.offset
@@ -194,9 +196,10 @@ class DynamixelMotor(Joint):
     def speed_to_usi(self, value: bytes) -> float:
         """Convert speed to usi (in rad/s)."""
         dxl_speed = unpack('H', value)[0]
+        assert 0 <= dxl_speed < 2048
         if dxl_speed > 1023:
             cw = True
-            dxl_speed - 1024
+            dxl_speed -= 1024
         else:
             cw = False
         rpm = dxl_speed * 0.114
@@ -209,7 +212,9 @@ class DynamixelMotor(Joint):
 
     def torque_to_usi(self, value: bytes) -> float:
         """Convert torque to usi (in %)."""
-        return unpack('H', value)[0] / 10.23
+        raw_torque = unpack('H', value)[0]
+        assert 0 <= raw_torque < 1024
+        return raw_torque / 10.23
 
     def temperature_to_raw(self, value: int) -> bytes:
         """Convert temperature (in C) to raw."""
@@ -343,7 +348,7 @@ class XL320(DynamixelMotorV2):
         return 'XL320'
 
 
-def get_motor_from_model(model: DynamixelModelNumber) -> DynamixelMotor:
+def get_motor_from_model(model: DynamixelModelNumber) -> Type[DynamixelMotor]:
     return {
         DynamixelModelNumber.AX18: AX18,
         DynamixelModelNumber.MX28: MX28,
