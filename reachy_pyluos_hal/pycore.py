@@ -22,6 +22,9 @@ class GateProtocol(Protocol):
 
     MSG_TYPE_DXL_GET_REG = 10
     MSG_TYPE_DXL_SET_REG = 11
+    MSG_TYPE_DXL_DETECT = 12
+    MSG_TYPE_DXL_SET_BAUDRATE = 13
+    MSG_TYPE_DXL_SET_POS_PUB_PERIOD = 14
     MSG_TYPE_DXL_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
     MSG_TYPE_FAN_GET_STATE = 30
@@ -39,6 +42,8 @@ class GateProtocol(Protocol):
     MSG_DETECTION_PUB_CONTAINER_INFO = 217
     MSG_DETECTION_RUN = 218
     MSG_MODULE_ASSERT = 222
+
+    DXL_BROADCAST_ID = 0xFE
 
     logger: Optional[Logger] = None
     header = bytes([255, 255])
