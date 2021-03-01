@@ -4,7 +4,8 @@ It can be any DynamixelMotor or an OrbitaMotor.
 """
 
 from abc import ABC
-from typing import Callable, Dict, Tuple
+from logging import Logger
+from typing import Callable, Dict, Optional, Tuple
 
 from .register import Register
 
@@ -33,6 +34,7 @@ class Joint(ABC):
             reg: Register(cvt_as_usi, cvt_as_raw)
             for reg, (cvt_as_usi, cvt_as_raw) in register_config.items()
         }
+        self.logger: Optional[Logger] = None
 
     def is_value_set(self, register: str) -> bool:
         """Check if the register has been set since last reset."""

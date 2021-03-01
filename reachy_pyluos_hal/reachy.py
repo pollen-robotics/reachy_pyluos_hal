@@ -137,6 +137,8 @@ class Reachy(GateProtocol):
                     self.fans[name] = dev
                     self.fan4id[dev.id] = dev
 
+                dev.logger = self.logger
+
     def __enter__(self):
         """Enter context handler."""
         self.start()

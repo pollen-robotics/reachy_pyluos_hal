@@ -5,7 +5,8 @@ import numpy as np
 
 from math import pi
 from enum import Enum
-from typing import Dict, List
+from logging import Logger
+from typing import Dict, List, Optional
 
 from .register import Register
 
@@ -52,6 +53,8 @@ class OrbitaActuator:
         self.disk_middle = OrbitaDisk('disk_middle', self.resolution, self.reduction)
         self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
+
+        self.logger: Optional[Logger] = None
 
     def __str__(self) -> str:
         """Get Orbita Actuator string representation."""

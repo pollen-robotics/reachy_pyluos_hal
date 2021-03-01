@@ -1,4 +1,6 @@
 """Fan device abstraction."""
+from logging import Logger
+from typing import Optional
 
 from .register import Register
 
@@ -10,6 +12,8 @@ class Fan:
         """Set up new Fan."""
         self.id = id
         self._state = Register(self.cvt_as_usi, self.cvt_as_raw)
+
+        self.logger: Optional[Logger] = None
 
     @property
     def state(self) -> Register:

@@ -2,6 +2,9 @@
 
 import struct
 
+from logging import Logger
+from typing import Optional
+
 from .register import Register
 
 
@@ -12,6 +15,7 @@ class ForceSensor:
         """Wrap a force Register."""
         self.id = id
         self.force = Register(self.cvt_as_usi, self.cvt_as_raw, timeout=1.0)
+        self.logger: Optional[Logger] = None
 
     def __repr__(self) -> str:
         """Represent force sensor."""
