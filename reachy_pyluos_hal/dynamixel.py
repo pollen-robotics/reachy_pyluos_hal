@@ -181,7 +181,10 @@ class DynamixelMotor(Joint):
     def position_to_usi(self, value: bytes) -> float:
         """Convert position to usi (in rad)."""
         dxl_raw_pos = unpack('H', value)[0]
-        assert 0 <= dxl_raw_pos < self.max_position
+        if not (0 <= dxl_raw_pos < self.max_position):
+            if self.logger is not None:
+                self.logger.warning(f'Corrupted dynamixel position received ({dxl_raw_pos} should be in (0, {self.max_position}))!')
+                dxl_raw_pos = np.clip(dxl_raw_pos, 0, self.max_position)
         pos_ratio = dxl_raw_pos / (self.max_position - 1)
         pos = (pos_ratio * self.max_radian) - self.max_radian / 2
         return (pos if self.direct else -pos) - self.offset
