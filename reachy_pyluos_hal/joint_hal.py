@@ -89,6 +89,6 @@ class JointLuos:
         """Return the names of all force sensors."""
         return list(self.reachy.force_sensors.keys())
 
-    def get_grip_force(self, names: List[str]) -> List[float]:
+    def get_force(self, names: List[str]) -> List[float]:
         """Return the current force of the specified sensors."""
         return [self.reachy.force_sensors[name].get_force() for name in names]
