@@ -1,6 +1,5 @@
 """Serial communication protocol with Reachy Luos Gate."""
 
-from reachy_pyluos_hal.orbita import OrbitaRegister
 import sys
 import time
 import struct
@@ -13,6 +12,7 @@ from typing import Dict, Iterable, List, Optional, Type, Tuple
 from serial import Serial
 from serial.threaded import Protocol, ReaderThread
 
+from .orbita import OrbitaRegister
 
 LuosContainer = namedtuple('LuosContainer', ('id', 'alias', 'type'))
 

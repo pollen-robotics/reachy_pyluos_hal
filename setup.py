@@ -10,7 +10,8 @@ setup(
     packages=find_packages(exclude=['tests']),
 
     install_requires=[
-        'reachy_ros_hal',
+        'numpy',
+        'pyserial',
     ],
 
     author='Pollen Robotics',

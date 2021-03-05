@@ -3,13 +3,11 @@
 from typing import Dict, List, Optional
 from logging import Logger
 
-from reachy_ros_hal.joint import JointABC
-
 from .reachy import Reachy
 
 
-class JointLuos(JointABC):
-    """Implementation of the joint JointABC via serial communication to the luos board."""
+class JointLuos:
+    """Implementation of the joint hal via serial communication to the luos boards."""
 
     def __init__(self, logger: Logger) -> None:
         """Create and start Reachy which wraps serial Luos GateClients."""

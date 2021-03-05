@@ -2,14 +2,13 @@
 
 import sys
 
-from typing import Dict, List, Tuple
-from logging import Logger
+from collections import OrderedDict, defaultdict
 from glob import glob
+from logging import Logger
 from math import pi
 from operator import attrgetter
-
 from threading import Lock
-from collections import OrderedDict, defaultdict
+from typing import Dict, List, Tuple
 
 from .device import Device
 from .discovery import find_gate
