@@ -97,7 +97,7 @@ class Reachy(GateProtocol):
         self.dxls: Dict[str, Joint] = OrderedDict({})
         self.dxl4id: Dict[int, DynamixelMotor] = {}
 
-        self.fans: Dict[str, Fan] = {}
+        self.fans: Dict[str, Fan] = OrderedDict({})
         self.fan4id: Dict[int, Fan] = {}
 
         self.orbita4id: Dict[int, OrbitaActuator] = {}
