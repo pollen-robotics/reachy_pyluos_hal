@@ -3,8 +3,6 @@
 import time
 
 from logging import Logger
-from reachy_pyluos_hal.fan import Fan
-from reachy_pyluos_hal.orbita import OrbitaActuator
 from typing import Dict, List, Optional, Tuple
 
 from serial import Serial
@@ -12,7 +10,9 @@ from serial.threaded import ReaderThread
 
 from .device import Device
 from .dynamixel import DynamixelMotor
+from .fan import Fan
 from .force_sensor import ForceSensor
+from .orbita import OrbitaActuator
 from .pycore import GateProtocol, LuosContainer
 
 

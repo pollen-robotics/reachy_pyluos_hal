@@ -1,12 +1,12 @@
 """Dynamixel implentation of a Joint."""
 
-import numpy as np
-
 from abc import abstractproperty
 from enum import Enum
-from numpy import clip, deg2rad, pi
-from struct import pack, unpack
 from typing import Dict, List, Tuple, Type
+from struct import pack, unpack
+
+import numpy as np
+from numpy import clip, deg2rad, pi
 
 from .joint import Joint
 

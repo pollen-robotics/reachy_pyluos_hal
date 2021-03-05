@@ -1,12 +1,12 @@
 """Orbita Actuator abstraction."""
 
 import struct
-import numpy as np
-
 from math import pi
 from enum import Enum
 from logging import Logger
 from typing import Dict, List, Optional
+
+import numpy as np
 
 from .register import Register
 
