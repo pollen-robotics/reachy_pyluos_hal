@@ -235,7 +235,7 @@ class Reachy(GateProtocol):
 
         if dxl_values:
             self.set_dxls_value(register, dxl_values)
-        if orbita_values:   
+        if orbita_values:
             if register == 'moving_speed':
                 if self.logger is not None:
                     self.logger.warning('Speed for orbita not handled!!!')

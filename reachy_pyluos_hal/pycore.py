@@ -73,7 +73,7 @@ class GateProtocol(Protocol):
         if isinstance(exc, Exception):
             raise exc
         if self.logger is not None:
-            self.logger.debug(f'Connection closed.')
+            self.logger.debug('Connection closed.')
 
     def data_received(self, data: bytearray):
         """Handle new received data."""
