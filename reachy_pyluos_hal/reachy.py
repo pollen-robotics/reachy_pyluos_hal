@@ -103,7 +103,7 @@ class Reachy(GateProtocol):
         self.orbita4id: Dict[int, OrbitaActuator] = {}
         self.orbitas: Dict[str, OrbitaActuator] = OrderedDict({})
 
-        self.force_sensors: Dict[str, ForceSensor] = {}
+        self.force_sensors: Dict[str, ForceSensor] = OrderedDict({})
         self.force4id: Dict[int, ForceSensor] = {}
 
         self.ports = glob(self.port_template)
