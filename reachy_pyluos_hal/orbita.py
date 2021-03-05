@@ -34,6 +34,9 @@ class OrbitaRegister(Enum):
     recalibrate = 41
     magnetic_quality = 42
 
+    position_pub_period = 50
+    fan_trigger_temperature_threshold = 51
+
 
 class OrbitaActuator:
     """Orbtia Actuator abstraction."""
@@ -119,6 +122,9 @@ class OrbitaDisk:
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
+        self.position_pub_period = Register(self.period_as_usi, self.period_as_raw)
+        self.fan_trigger_temperature_threshold = Register(self.temperature_as_usi, self.temperature_as_raw)
+
 
         self.resolution = resolution
         self.reduction = reduction
@@ -214,3 +220,9 @@ class OrbitaDisk:
     def quality_as_raw(self, val: List[float]) -> bytes:
         """Convert magnetic quality to raw (MagInc, MagDec, Linearity)."""
         raise NotImplementedError
+
+    def period_as_usi(self, val: bytes) -> int:
+        return struct.unpack('H', val)[0]
+
+    def period_as_raw(self, val: int) -> bytes:
+        return struct.pack('H', val)
