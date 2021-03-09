@@ -97,6 +97,10 @@ class JointLuos:
         """Return the names of all fans."""
         return list(self.reachy.fans.keys())
 
+    def get_fans_state(self, fan_names: List[str]) -> List[bool]:
+        """Get states for the specified fans."""
+        return [state == 1.0 for state in self.reachy.get_fans_state(fan_names)]
+
     def set_fan_state(self, fan_states: Dict[str, bool]) -> bool:
         """Set states for the specified fans."""
         self.reachy.set_fans_state({name: 1.0 if state else 0.0 for name, state in fan_states.items()})
