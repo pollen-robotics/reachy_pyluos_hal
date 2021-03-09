@@ -54,9 +54,9 @@ class Reachy(GateProtocol):
         ]),
         OrderedDict([
             ('neck', OrbitaActuator(id=10)),
+            ('neck_fan', OrbitaFan(id=10, orbita='neck')),
             ('l_antenna', XL320(id=30, offset=0, direct=True)),
             ('r_antenna', XL320(id=31, offset=0, direct=True)),
-            ('neck_fan', OrbitaFan(id=10, orbita='neck')),
         ]),
     ]
     if sys.platform == 'linux':
