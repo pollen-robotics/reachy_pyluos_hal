@@ -233,7 +233,7 @@ class OrbitaDisk:
 
     def state_as_usi(self, val: bytes) -> bool:
         """Convert state to bool."""
-        return val[0] == 1
+        return val[0] != 0
 
     def state_as_raw(self, state: bool) -> bytes:
         """Convert state as raw."""
