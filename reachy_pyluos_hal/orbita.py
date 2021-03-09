@@ -35,6 +35,9 @@ class OrbitaRegister(Enum):
     magnetic_quality = 42
 
     fan_state = 50
+    fan_trigger_temperature_threshold = 51
+
+    position_pub_period = 60
 
 
 class OrbitaActuator:
@@ -122,6 +125,8 @@ class OrbitaDisk:
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
         self.fan_state = Register(self.state_as_usi, self.state_as_raw)
+        self.fan_trigger_temperature_threshold = Register(self.temperature_as_usi, self.temperature_as_raw)
+        self.position_pub_period = Register(self.period_as_usi, self.period_as_raw)
 
         self.resolution = resolution
         self.reduction = reduction
@@ -218,9 +223,17 @@ class OrbitaDisk:
         """Convert magnetic quality to raw (MagInc, MagDec, Linearity)."""
         raise NotImplementedError
 
+    def period_as_usi(self, val: bytes) -> int:
+        """Convert period to usi."""
+        return struct.unpack('B', val)[0]
+
+    def period_as_raw(self, val: int) -> bytes:
+        """Convert period to raw."""
+        return struct.pack('B', val)
+
     def state_as_usi(self, val: bytes) -> bool:
         """Convert state to bool."""
-        return val[0] == 1
+        return val[0] != 0
 
     def state_as_raw(self, state: bool) -> bytes:
         """Convert state as raw."""
