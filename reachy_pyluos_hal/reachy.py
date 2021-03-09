@@ -53,8 +53,8 @@ class Reachy(GateProtocol):
             ('l_force_gripper', ForceSensor(id=20)),
         ]),
         OrderedDict([
-            ('neck', OrbitaActuator(id=10)),
-            ('neck_fan', OrbitaFan(id=10, orbita='neck')),
+            ('neck', OrbitaActuator(id=40)),
+            ('neck_fan', OrbitaFan(id=40, orbita='neck')),
             ('l_antenna', XL320(id=30, offset=0, direct=True)),
             ('r_antenna', XL320(id=31, offset=0, direct=True)),
             ('head_left_fan', DxlFan(id=30)),
