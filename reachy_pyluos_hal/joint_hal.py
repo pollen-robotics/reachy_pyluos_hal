@@ -103,5 +103,5 @@ class JointLuos:
 
     def set_fan_state(self, fan_states: Dict[str, bool]) -> bool:
         """Set states for the specified fans."""
-        self.reachy.set_fans_state({name: 1.0 if state else 0.0 for name, state in fan_states.items()})
+        self.reachy.set_fans_state({name: 1 if state else 0 for name, state in fan_states.items()})
         return True
