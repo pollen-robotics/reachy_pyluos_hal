@@ -370,7 +370,7 @@ class Reachy(GateProtocol):
                 orbita_fans.append((name, fan.orbita))
 
         for gate, ids in dxl_fans_per_gate.items():
-            gate.protocol.send_fan_get(ids)
+            gate.protocol.send_dxl_fan_get(ids)
 
         fans_state = {}
         for name in dxl_fans:
@@ -392,7 +392,7 @@ class Reachy(GateProtocol):
                 fans_per_gate[self.gate4name[name]][fan.id] = state
 
         for gate, values in fans_per_gate.items():
-            gate.protocol.send_fan_set(values)
+            gate.protocol.send_dxl_fan_set(values)
 
     def _is_torque_enable(self, name: str) -> bool:
         return self.get_dxls_value('torque_enable', [name], clear_value=False, retry=3)[0] == 1
