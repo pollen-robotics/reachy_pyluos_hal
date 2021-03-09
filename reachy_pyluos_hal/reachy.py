@@ -128,15 +128,24 @@ class Reachy(GateProtocol):
                 self.gate4name[name] = gate
                 if isinstance(dev, DynamixelMotor):
                     self.dxls[name] = dev
+                    if dev.id in self.dxl4id:
+                        raise ValueError(f'All dynamixels id should be unique ({dev})!')
                     self.dxl4id[dev.id] = dev
                 if isinstance(dev, ForceSensor):
                     self.force_sensors[name] = dev
+                    if dev.id in self.force4id:
+                        raise ValueError(f'All force sensors id should be unique ({dev})!')
                     self.force4id[dev.id] = dev
                 if isinstance(dev, OrbitaActuator):
+                    if dev.id in self.orbita4id:
+                        raise ValueError(f'All orbitas id should be unique ({dev})!')
                     self.orbita4id[dev.id] = dev
                     self.orbitas[name] = dev
                 if isinstance(dev, Fan):
                     self.fans[name] = dev
+                    if dev.id in self.fan4id:
+                        raise ValueError(f'All fans id should be unique ({dev})!')
+
                     self.fan4id[dev.id] = dev
 
                 dev.logger = self.logger
