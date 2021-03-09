@@ -225,11 +225,11 @@ class OrbitaDisk:
 
     def period_as_usi(self, val: bytes) -> int:
         """Convert period to usi."""
-        return struct.unpack('H', val)[0]
+        return struct.unpack('B', val)[0]
 
     def period_as_raw(self, val: int) -> bytes:
         """Convert period to raw."""
-        return struct.pack('H', val)
+        return struct.pack('B', val)
 
     def state_as_usi(self, val: bytes) -> bool:
         """Convert state to bool."""
