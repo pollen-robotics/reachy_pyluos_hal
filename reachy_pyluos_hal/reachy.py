@@ -355,7 +355,7 @@ class Reachy(GateProtocol):
         }
         gate.protocol.send_orbita_set(orbita.id, register.value, value_for_id)
 
-    def get_fans_state(self, fan_names: List[str]) -> List[float]:
+    def get_fans_state(self, fan_names: List[str], retry=3) -> List[float]:
         """Retrieve state for the specified fans."""
         dxl_fans_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
         dxl_fans: List[str] = []
@@ -374,14 +374,20 @@ class Reachy(GateProtocol):
         for gate, ids in dxl_fans_per_gate.items():
             gate.protocol.send_dxl_fan_get(ids)
 
-        fans_state = {}
-        for name in dxl_fans:
-            fans_state[name] = self.fans[name].state.get_as_usi()
+        try:
+            fans_state = {}
+            for name in dxl_fans:
+                fans_state[name] = self.fans[name].state.get_as_usi()
 
-        for fan_name, orbita_name in orbita_fans:
-            fans_state[fan_name] = self.get_orbita_values('fan_state', orbita_name, clear_value=True, retry=3)[0]
+            for fan_name, orbita_name in orbita_fans:
+                fans_state[fan_name] = self.get_orbita_values('fan_state', orbita_name, clear_value=True, retry=retry)[0]
 
-        return [fans_state[name] for name in fan_names]
+            return [fans_state[name] for name in fan_names]
+
+        except TimeoutError:
+            if retry > 0:
+                return self.get_fans_state(fan_names, retry - 1)
+            raise
 
     def set_fans_state(self, state_for_fan: Dict[str, float]):
         """Set state for the specified fans."""
