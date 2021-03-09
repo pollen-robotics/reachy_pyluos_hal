@@ -27,3 +27,16 @@ class Fan:
     def cvt_as_raw(self, val: float) -> bytes:
         """Convert from USI (0 or 1)."""
         return bytes([int(val)])
+
+
+class DxlFan(Fan):
+    """Specific Dynamixel Fan."""
+
+
+class OrbitaFan(Fan):
+    """Specific Orbita Fan."""
+
+    def __init__(self, id: int, orbita: str) -> None:
+        """Set up a new orbita fan."""
+        super().__init__(id)
+        self.orbita = orbita

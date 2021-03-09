@@ -2,19 +2,18 @@
 
 import sys
 
-from typing import Dict, List, Tuple
-from logging import Logger
+from collections import OrderedDict, defaultdict
 from glob import glob
+from logging import Logger
 from math import pi
 from operator import attrgetter
-
 from threading import Lock
-from collections import OrderedDict, defaultdict
+from typing import Dict, List, Tuple
 
 from .device import Device
 from .discovery import find_gate
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18, XL320
-from .fan import Fan
+from .fan import DxlFan, Fan, OrbitaFan
 from .force_sensor import ForceSensor
 from .joint import Joint
 from .orbita import OrbitaActuator, OrbitaRegister
@@ -57,6 +56,7 @@ class Reachy(GateProtocol):
             ('neck', OrbitaActuator(id=10)),
             ('l_antenna', XL320(id=30, offset=0, direct=True)),
             ('r_antenna', XL320(id=31, offset=0, direct=True)),
+            ('neck_fan', OrbitaFan(id=10, orbita='neck')),
         ]),
     ]
     if sys.platform == 'linux':
@@ -98,13 +98,13 @@ class Reachy(GateProtocol):
         self.dxls: Dict[str, Joint] = OrderedDict({})
         self.dxl4id: Dict[int, DynamixelMotor] = {}
 
-        self.fans: Dict[str, Fan] = {}
+        self.fans: Dict[str, Fan] = OrderedDict({})
         self.fan4id: Dict[int, Fan] = {}
 
         self.orbita4id: Dict[int, OrbitaActuator] = {}
         self.orbitas: Dict[str, OrbitaActuator] = OrderedDict({})
 
-        self.force_sensors: Dict[str, ForceSensor] = {}
+        self.force_sensors: Dict[str, ForceSensor] = OrderedDict({})
         self.force4id: Dict[int, ForceSensor] = {}
 
         self.ports = glob(self.port_template)
@@ -235,9 +235,10 @@ class Reachy(GateProtocol):
 
         if dxl_values:
             self.set_dxls_value(register, dxl_values)
-        if orbita_values:   
+        if orbita_values:
             if register == 'moving_speed':
-                self.logger.warning('Speed for orbita not handled!!!')
+                if self.logger is not None:
+                    self.logger.warning('Speed for orbita not handled!!!')
                 return
             for orbita, values in orbita_values.items():
                 self.set_orbita_values(register, orbita, values)
@@ -278,7 +279,8 @@ class Reachy(GateProtocol):
                 name for name in dxl_names
                 if not self.dxls[name].is_value_set(register)
             ]
-            self.logger.warning(f'Timeout occurs after GET cmd: dev="{missing_dxls}" reg="{register}"!')
+            if self.logger is not None:
+                self.logger.warning(f'Timeout occurs after GET cmd: dev="{missing_dxls}" reg="{register}"!')
             if retry == 0:
                 raise e
             return self.get_dxls_value(register, dxl_names, clear_value, retry - 1)
@@ -330,7 +332,8 @@ class Reachy(GateProtocol):
         try:
             return orbita.get_value_as_usi(register)
         except TimeoutError as e:
-            self.logger.warning(f'Timeout occurs after GET cmd: dev="{orbita_name}" reg="{register_name}"!')
+            if self.logger is not None:
+                self.logger.warning(f'Timeout occurs after GET cmd: dev="{orbita_name}" reg="{register_name}"!')
             if retry == 0:
                 raise e
             return self.get_orbita_values(register_name, orbita_name, clear_value, retry - 1)
@@ -352,16 +355,31 @@ class Reachy(GateProtocol):
 
     def get_fans_state(self, fan_names: List[str]) -> List[float]:
         """Retrieve state for the specified fans."""
-        fans_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
+        dxl_fans_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
+        dxl_fans: List[str] = []
+        orbita_fans: List[Tuple[str, str]] = []
 
-        for fan in fan_names:
-            self.fans[fan].state.reset()
-            fans_per_gate[self.gate4name[fan]].append(self.fans[fan].id)
+        for name in fan_names:
+            fan = self.fans[name]
 
-        for gate, ids in fans_per_gate.items():
+            if isinstance(fan, DxlFan):
+                fan.state.reset()
+                dxl_fans_per_gate[self.gate4name[name]].append(fan.id)
+                dxl_fans.append(name)
+            elif isinstance(fan, OrbitaFan):
+                orbita_fans.append((name, fan.orbita))
+
+        for gate, ids in dxl_fans_per_gate.items():
             gate.protocol.send_fan_get(ids)
 
-        return [self.fans[name].state.get_as_usi() for name in fan_names]
+        fans_state = {}
+        for name in dxl_fans:
+            fans_state[name] = self.fans[name].state.get_as_usi()
+
+        for fan_name, orbita_name in orbita_fans:
+            fans_state[fan_name] = self.get_orbita_values('fan_state', orbita_name, clear_value=True, retry=3)[0]
+
+        return [fans_state[name] for name in fan_names]
 
     def set_fans_state(self, state_for_fan: Dict[str, float]):
         """Set state for the specified fans."""
@@ -369,8 +387,9 @@ class Reachy(GateProtocol):
 
         for name, state in state_for_fan.items():
             fan = self.fans[name]
-            fan.state.update_using_usi(state)
-            fans_per_gate[self.gate4name[name]][fan.id] = state
+            if isinstance(fan, DxlFan):
+                fan.state.update_using_usi(state)
+                fans_per_gate[self.gate4name[name]][fan.id] = state
 
         for gate, values in fans_per_gate.items():
             gate.protocol.send_fan_set(values)

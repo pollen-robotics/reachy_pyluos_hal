@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Setup configuration file."""
 
 from setuptools import find_packages, setup
 
@@ -9,7 +10,8 @@ setup(
     packages=find_packages(exclude=['tests']),
 
     install_requires=[
-        'reachy_ros_hal',
+        'numpy',
+        'pyserial',
     ],
 
     author='Pollen Robotics',

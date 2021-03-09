@@ -1,17 +1,19 @@
 """Dynamixel implentation of a Joint."""
 
-import numpy as np
-
 from abc import abstractproperty
 from enum import Enum
-from numpy import clip, deg2rad, pi
-from struct import pack, unpack
 from typing import Dict, List, Tuple, Type
+from struct import pack, unpack
+
+import numpy as np
+from numpy import clip, deg2rad, pi
 
 from .joint import Joint
 
 
 class DynamixelModelNumber(Enum):
+    """Enum representing the different Dynamixel models."""
+
     AX18 = 18
     MX28 = 29
     MX64 = 310
@@ -20,6 +22,8 @@ class DynamixelModelNumber(Enum):
 
 
 class DynamixelError(Enum):
+    """Enum representing the different Dynamixel errors."""
+
     InstructionError = 6
     OverloadError = 5
     ChecksumError = 4
@@ -112,6 +116,7 @@ class DynamixelMotor(Joint):
         return bytes([id])
 
     def baudrate_to_usi(self, value: bytes) -> int:
+        """Convert baudrate dynamixel id to bps."""
         return {
             0: 2000000,
             1: 1000000,
@@ -126,6 +131,7 @@ class DynamixelMotor(Joint):
         }[value[0]]
 
     def baudrate_to_raw(self, baudrate: int) -> bytes:
+        """Convert bps to dynamixel baudrate id."""
         return bytes([{
             2000000: 0,
             1000000: 1,
@@ -151,10 +157,12 @@ class DynamixelMotor(Joint):
         return bytes([rdt // 2])
 
     def alarm_to_usi(self, value: bytes) -> List[DynamixelError]:
+        """Convert raw error bytes to list of DynamixelError."""
         error_indices = np.where(np.unpackbits(np.asarray(value[0], dtype=np.uint8))[::-1])[0]
         return [DynamixelError(err) for err in error_indices]
 
     def alarm_to_raw(self, errors: List[DynamixelError]) -> bytes:
+        """Convert dynamixel errors to raw coded bytes."""
         value = 0
 
         for err in errors:
@@ -352,6 +360,7 @@ class XL320(DynamixelMotorV2):
 
 
 def get_motor_from_model(model: DynamixelModelNumber) -> Type[DynamixelMotor]:
+    """Get the motor class corresponding to the specified model number."""
     return {
         DynamixelModelNumber.AX18: AX18,
         DynamixelModelNumber.MX28: MX28,

@@ -1,3 +1,5 @@
+"""Command line utility tool to configure Dynamixel motor using Reachy specific Luos Module."""
+
 import argparse
 import logging
 import struct
@@ -15,12 +17,16 @@ from ..pycore import GateProtocol
 
 
 class GateHandler(GateProtocol):
+    """Custom handler for dynamixel message callback."""
+
     dxl: Optional[DynamixelMotor] = None
 
     def handle_assert(self, msg):
+        """Assert message reception callback."""
         raise AssertionError(msg)
 
     def handle_dxl_pub_data(self, register, ids, errors, data):
+        """Dynamixel message reception callback."""
         register = self.dxl.find_register_by_addr(register)
 
         for id, val in zip(ids, data):
@@ -29,6 +35,7 @@ class GateHandler(GateProtocol):
 
 
 def get_dxl_register(gate_protocol: GateHandler, reg: str):
+    """Send a get dynamixel request and wait for the answer."""
     dxl = gate_protocol.dxl
     assert dxl is not None
 
@@ -40,6 +47,7 @@ def get_dxl_register(gate_protocol: GateHandler, reg: str):
 
 
 def set_dxl_register(gate_protocol: GateHandler, reg: str, value):
+    """Send a set dynamixel request."""
     dxl = gate_protocol.dxl
     assert dxl is not None
 
@@ -50,6 +58,7 @@ def set_dxl_register(gate_protocol: GateHandler, reg: str, value):
 
 
 def get_dxl(port, dxl_alias) -> DynamixelMotor:
+    """Retrieve the specific motor model given its id."""
     dxl_id = int(dxl_alias.split('_')[1])
 
     with Serial(port, baudrate=1000000) as s:
@@ -64,6 +73,7 @@ def get_dxl(port, dxl_alias) -> DynamixelMotor:
 
 
 def read_eeprom(port, dxl):
+    """Read and print the EEPROM configuration of a dynamixel motor."""
     with Serial(args.port, baudrate=1000000) as s:
         with ReaderThread(s, GateHandler) as p:
             p.dxl = dxl
@@ -83,6 +93,7 @@ def read_eeprom(port, dxl):
 
 
 def write_eeprom(port, dxl, args):
+    """Write the specified values to a dynamixel motor EEPROM."""
     first_write = True
 
     with Serial(args.port, baudrate=1000000) as s:
@@ -123,6 +134,7 @@ def write_eeprom(port, dxl, args):
 
 
 def change_dxl_baudrate(port: str, baud: int):
+    """Change the baudrate of a dynamixel motor and reset the connection to still be able to communicate with it."""
     with Serial(port, baudrate=1000000) as s:
         with ReaderThread(s, GateHandler) as p:
             msg = [p.MSG_TYPE_DXL_SET_BAUDRATE, p.DXL_BROADCAST_ID]
@@ -136,6 +148,7 @@ def change_dxl_baudrate(port: str, baud: int):
 
 
 def get_dxl_motor_from_containers(containers, logger):
+    """Look for a single dynamixel motor on a Luos bus."""
     if len(containers) != 2:
         logger.error('Make sure exactly only the gate, the dynamixel module and one motor are connected!')
         logger.error(f'(modules found: {containers}')

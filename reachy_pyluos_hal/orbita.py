@@ -1,12 +1,12 @@
 """Orbita Actuator abstraction."""
 
 import struct
-import numpy as np
-
 from math import pi
 from enum import Enum
 from logging import Logger
 from typing import Dict, List, Optional
+
+import numpy as np
 
 from .register import Register
 
@@ -34,8 +34,10 @@ class OrbitaRegister(Enum):
     recalibrate = 41
     magnetic_quality = 42
 
-    position_pub_period = 50
+    fan_state = 50
     fan_trigger_temperature_threshold = 51
+
+    position_pub_period = 60
 
 
 class OrbitaActuator:
@@ -122,9 +124,9 @@ class OrbitaDisk:
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
-        self.position_pub_period = Register(self.period_as_usi, self.period_as_raw)
+        self.fan_state = Register(self.state_as_usi, self.state_as_raw)
         self.fan_trigger_temperature_threshold = Register(self.temperature_as_usi, self.temperature_as_raw)
-
+        self.position_pub_period = Register(self.period_as_usi, self.period_as_raw)
 
         self.resolution = resolution
         self.reduction = reduction
@@ -222,7 +224,17 @@ class OrbitaDisk:
         raise NotImplementedError
 
     def period_as_usi(self, val: bytes) -> int:
+        """Convert period to usi."""
         return struct.unpack('H', val)[0]
 
     def period_as_raw(self, val: int) -> bytes:
+        """Convert period to raw."""
         return struct.pack('H', val)
+
+    def state_as_usi(self, val: bytes) -> bool:
+        """Convert state to bool."""
+        return val[0] == 1
+
+    def state_as_raw(self, state: bool) -> bytes:
+        """Convert state as raw."""
+        return bytes([state])

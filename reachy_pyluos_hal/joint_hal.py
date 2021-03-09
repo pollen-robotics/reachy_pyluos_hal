@@ -3,13 +3,11 @@
 from typing import Dict, List, Optional
 from logging import Logger
 
-from reachy_ros_hal.joint import JointABC
-
 from .reachy import Reachy
 
 
-class JointLuos(JointABC):
-    """Implementation of the joint JointABC via serial communication to the luos board."""
+class JointLuos:
+    """Implementation of the joint hal via serial communication to the luos boards."""
 
     def __init__(self, logger: Logger) -> None:
         """Create and start Reachy which wraps serial Luos GateClients."""
@@ -87,8 +85,23 @@ class JointLuos(JointABC):
         })
         return True
 
-    def get_grip_force(self, sides: List[str]) -> List[float]:
-        """Return the current forces of the specified grip sensors."""
-        sides = ['r' if side == 'right' else 'l' for side in sides]
-        force_sensors = [self.reachy.force_sensors[f'{side}_force_gripper'] for side in sides]
-        return [sensor.get_force() for sensor in force_sensors]
+    def get_all_force_sensor_names(self) -> List[str]:
+        """Return the names of all force sensors."""
+        return list(self.reachy.force_sensors.keys())
+
+    def get_force(self, names: List[str]) -> List[float]:
+        """Return the current force of the specified sensors."""
+        return [self.reachy.force_sensors[name].get_force() for name in names]
+
+    def get_all_fan_names(self) -> List[str]:
+        """Return the names of all fans."""
+        return list(self.reachy.fans.keys())
+
+    def get_fans_state(self, fan_names: List[str]) -> List[bool]:
+        """Get states for the specified fans."""
+        return [state == 1.0 for state in self.reachy.get_fans_state(fan_names)]
+
+    def set_fan_state(self, fan_states: Dict[str, bool]) -> bool:
+        """Set states for the specified fans."""
+        self.reachy.set_fans_state({name: 1.0 if state else 0.0 for name, state in fan_states.items()})
+        return True
