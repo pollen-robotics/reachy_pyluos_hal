@@ -34,6 +34,8 @@ class OrbitaRegister(Enum):
     recalibrate = 41
     magnetic_quality = 42
 
+    fan_state = 50
+
 
 class OrbitaActuator:
     """Orbtia Actuator abstraction."""
@@ -119,6 +121,7 @@ class OrbitaDisk:
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
+        self.fan_state = Register(self.state_as_usi, self.state_as_raw)
 
         self.resolution = resolution
         self.reduction = reduction
@@ -214,3 +217,11 @@ class OrbitaDisk:
     def quality_as_raw(self, val: List[float]) -> bytes:
         """Convert magnetic quality to raw (MagInc, MagDec, Linearity)."""
         raise NotImplementedError
+
+    def state_as_usi(self, val: bytes) -> bool:
+        """Convert state to bool."""
+        return val[0] == 1
+
+    def state_as_raw(self, state: bool) -> bytes:
+        """Convert state as raw."""
+        return bytes([state])

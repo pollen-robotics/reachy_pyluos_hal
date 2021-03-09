@@ -142,11 +142,11 @@ class GateProtocol(Protocol):
             msg += [motor_id] + list(value)
         self.send_msg(bytes(msg))
 
-    def send_fan_get(self, fans: List[int]):
+    def send_dxl_fan_get(self, fans: List[int]):
         """Send a fan get message [MSG_TYPE_FAN_GET_STATE, (FAN_ID)+]."""
         self.send_msg(bytes([self.MSG_TYPE_FAN_GET_STATE] + fans))
 
-    def send_fan_set(self, state_for_fan: Dict[int, int]):
+    def send_dxl_fan_set(self, state_for_fan: Dict[int, int]):
         """Send a fan set message [MSG_TYPE_FAN_SET_STATE, (FAN_ID, STATE)+]."""
         msg = [self.MSG_TYPE_FAN_SET_STATE]
         for fan_id, fan_state in state_for_fan.items():
