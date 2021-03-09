@@ -57,6 +57,8 @@ class Reachy(GateProtocol):
             ('neck_fan', OrbitaFan(id=10, orbita='neck')),
             ('l_antenna', XL320(id=30, offset=0, direct=True)),
             ('r_antenna', XL320(id=31, offset=0, direct=True)),
+            ('head_left_fan', DxlFan(id=30)),
+            ('head_right_fan', DxlFan(id=31)),
         ]),
     ]
     if sys.platform == 'linux':
