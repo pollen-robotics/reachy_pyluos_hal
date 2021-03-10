@@ -73,33 +73,57 @@ class JointLuos:
         is_torques_enabled = self.reachy.get_joints_value('torque_enable', names)
         return [torque == 0 for torque in is_torques_enabled]
 
-    def set_goal_positions(self, goal_positions: Dict[str, float]) -> None:
+    def set_goal_positions(self, goal_positions: Dict[str, float]) -> bool:
         """Set new goal positions for the specified joints."""
-        self.reachy.set_joints_value('goal_position', goal_positions)
+        try:
+            self.reachy.set_joints_value('goal_position', goal_positions)
+            return True
+        except (ValueError, TimeoutError) as e:
+            self.logger.warning(f'Set_goal_positions failed with error {e}')
+            return False
 
-    def set_goal_velocities(self, goal_velocities: Dict[str, float]) -> None:
+    def set_goal_velocities(self, goal_velocities: Dict[str, float]) -> bool:
         """Set new goal velocities for the specified joints."""
-        self.reachy.set_joints_value('moving_speed', goal_velocities)
+        try:
+            self.reachy.set_joints_value('moving_speed', goal_velocities)
+            return True
+        except (ValueError, TimeoutError) as e:
+            self.logger.warning(f'Set_goal_velocities failed with error {e}')
+            return False
 
-    def set_goal_efforts(self, goal_efforts: Dict[str, float]) -> None:
+    def set_goal_efforts(self, goal_efforts: Dict[str, float]) -> bool:
         """Set new goal efforts for the specified joints."""
-        self.reachy.set_joints_value('torque_limit', goal_efforts)
+        try:
+            self.reachy.set_joints_value('torque_limit', goal_efforts)
+            return True
+        except (ValueError, TimeoutError) as e:
+            self.logger.warning(f'Set_goal_efforts failed with error {e}')
+            return False
 
-    def set_goal_pids(self, goal_pids: Dict[str, Tuple[float, float, float]]) -> None:
+    def set_goal_pids(self, goal_pids: Dict[str, Tuple[float, float, float]]) -> bool:
         """Set the new PIDs to the specified joints.
 
         You should refer to the documentation of dynamixel for a better understanding of the range of values.
         The AX dynamixel motors do not have PID register so their value will be ignored.
         """
-        self.reachy.set_joints_pid(goal_pids)
+        try:
+            self.reachy.set_joints_pid(goal_pids)
+            return True
+        except (ValueError, TimeoutError) as e:
+            self.logger.warning(f'Set_goal_pids failed with error {e}')
+            return False
 
     def set_compliance(self, compliances: Dict[str, bool]) -> bool:
         """Set new compliances for the specified joints."""
-        self.reachy.set_joints_value('torque_enable', {
-            name: 0 if compliant else 1
-            for name, compliant in compliances.items()
-        })
-        return True
+        try:
+            self.reachy.set_joints_value('torque_enable', {
+                name: 0 if compliant else 1
+                for name, compliant in compliances.items()
+            })
+            return True
+        except (ValueError, TimeoutError) as e:
+            self.logger.warning(f'Set_compliance failed with error {e}')
+            return False
 
     def get_all_force_sensor_names(self) -> List[str]:
         """Return the names of all force sensors."""
