@@ -53,6 +53,15 @@ class DynamixelMotor(Joint):
             'alarm_shutdown': (self.alarm_to_usi, self.alarm_to_raw),
 
             'torque_enable': (self.torque_enabled_to_usi, self.torque_enabled_to_raw),
+            'd_gain': (self.gain_to_usi, self.gain_to_raw),
+            'i_gain': (self.gain_to_usi, self.gain_to_raw),
+            'p_gain': (self.gain_to_usi, self.gain_to_raw),
+
+            'cw_compliance_margin': (self.gain_to_usi, self.gain_to_raw),
+            'ccw_compliance_margin': (self.gain_to_usi, self.gain_to_raw),
+            'cw_compliance_slope': (self.gain_to_usi, self.gain_to_raw),
+            'ccw_compliance_slope': (self.gain_to_usi, self.gain_to_raw),
+
             'goal_position': (self.position_to_usi, self.position_to_raw),
             'moving_speed': (self.speed_to_usi, self.speed_to_raw),
             'torque_limit': (self.torque_to_usi, self.torque_to_raw),
@@ -235,6 +244,14 @@ class DynamixelMotor(Joint):
         """Convert temperature to usi (in C)."""
         return int(value[0])
 
+    def gain_to_usi(self, value: bytes) -> int:
+        """Convert gain to USI."""
+        return unpack('B', value)[0]
+
+    def gain_to_raw(self, gain: int) -> bytes:
+        """Convert gain to raw."""
+        return pack('B', gain)
+
 
 class DynamixelMotorV1(DynamixelMotor):
     """Specific motor using protocol V1 registers."""
@@ -250,6 +267,9 @@ class DynamixelMotorV1(DynamixelMotor):
         'alarm_shutdown': (18, 1),
 
         'torque_enable': (24, 1),
+        'd_gain': (26, 1),
+        'i_gain': (27, 1),
+        'p_gain': (28, 1),
         'goal_position': (30, 2),
         'moving_speed': (32, 2),
         'torque_limit': (34, 2),
@@ -272,6 +292,9 @@ class DynamixelMotorV2(DynamixelMotor):
         'alarm_shutdown': (18, 1),
 
         'torque_enable': (24, 1),
+        'd_gain': (27, 1),
+        'i_gain': (28, 1),
+        'p_gain': (29, 1),
         'goal_position': (30, 2),
         'moving_speed': (32, 2),
         'torque_limit': (35, 2),
@@ -296,6 +319,28 @@ class MX(DynamixelMotorV1):
 
 class AX18(DynamixelMotorV1):
     """AX specific value."""
+
+    dxl_config = {
+        'model_number': (0, 2),
+        'id': (3, 1),
+        'baudrate': (4, 1),
+        'return_delay_time': (5, 1),
+        'cw_angle_limit': (6, 2),
+        'ccw_angle_limit': (8, 2),
+        'temperature_limit': (11, 1),
+        'alarm_shutdown': (18, 1),
+
+        'torque_enable': (24, 1),
+        'cw_compliance_margin': (26, 1),
+        'ccw_compliance_margin': (27, 1),
+        'cw_compliance_slope': (28, 1),
+        'ccw_compliance_slope': (29, 1),
+        'goal_position': (30, 2),
+        'moving_speed': (32, 2),
+        'torque_limit': (34, 2),
+        'present_position': (36, 2),
+        'temperature': (43, 1),
+    }
 
     @property
     def max_position(self) -> int:

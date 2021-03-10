@@ -1,6 +1,6 @@
 """Implementation of the joint reachy_ros_hal via serial communication to the luos board."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from logging import Logger
 
 from .reachy import Reachy
@@ -48,6 +48,14 @@ class JointLuos:
         """Return the current temperature (in C) of the specified joints."""
         return self.reachy.get_joints_value(register='temperature', joint_names=names)
 
+    def get_joint_pids(self, names: List[str]) -> List[Tuple[float, float, float]]:
+        """Return the current PIDs of the specified joints.
+
+        You should refer to the documentation of dynamixel for a better understanding of the range of values.
+        The AX dynamixel motors do not have PID register so their value should be ignored.
+        """
+        return self.reachy.get_joints_pid(joint_names=names)
+
     def get_goal_positions(self, names: List[str]) -> List[float]:
         """Return the goal position (in rad/s) of the specified joints."""
         return self.reachy.get_joints_value(register='goal_position', joint_names=names)
@@ -76,6 +84,14 @@ class JointLuos:
     def set_goal_efforts(self, goal_efforts: Dict[str, float]) -> None:
         """Set new goal efforts for the specified joints."""
         self.reachy.set_joints_value('torque_limit', goal_efforts)
+
+    def set_goal_pids(self, goal_pids: Dict[str, Tuple[float, float, float]]) -> None:
+        """Set the new PIDs to the specified joints.
+
+        You should refer to the documentation of dynamixel for a better understanding of the range of values.
+        The AX dynamixel motors do not have PID register so their value will be ignored.
+        """
+        self.reachy.set_joints_pid(goal_pids)
 
     def set_compliance(self, compliances: Dict[str, bool]) -> bool:
         """Set new compliances for the specified joints."""
