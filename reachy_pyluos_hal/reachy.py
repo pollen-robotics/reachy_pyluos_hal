@@ -307,6 +307,8 @@ class Reachy(GateProtocol):
                 if orbita_name not in orbita_pids:
                     orbita_pids[orbita_name] = {}
 
+                if len(value) != 3:
+                    raise ValueError(f'Orbita PIDs should be a triplet ({value})')
                 orbita_pids[orbita_name][disk_name] = value
             else:
                 raise ValueError(f'"{name}" is an unknown joints!')
