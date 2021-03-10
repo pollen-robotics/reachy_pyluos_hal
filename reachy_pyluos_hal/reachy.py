@@ -222,6 +222,41 @@ class Reachy(GateProtocol):
         values.update(orbitas_values)
         return [values[joint] for joint in joint_names]
 
+    def get_joints_pid(self, joint_names: List[str], retry: int = 3) -> List[Tuple[float, float, float]]:
+        """Return the pids of the specified joints."""
+        pids: Dict[str, Tuple[float, float, float]] = {}
+
+        dxl_names = [name for name in joint_names if name in self.dxls]
+        ax_names = [name for name in dxl_names if isinstance(self.dxls[name], AX18)]
+        dxl_names_with_pids = [name for name in dxl_names if name not in ax_names]
+
+        if dxl_names_with_pids:
+            dxl_p = self.get_dxls_value('p_gain', dxl_names_with_pids, clear_value=True, retry=retry)
+            dxl_i = self.get_dxls_value('i_gain', dxl_names_with_pids, clear_value=True, retry=retry)
+            dxl_d = self.get_dxls_value('d_gain', dxl_names_with_pids, clear_value=True, retry=retry)
+            for name, p, i, d in zip(dxl_names_with_pids, dxl_p, dxl_i, dxl_d):
+                pids[name] = (p, i, d)
+
+        if ax_names:
+            cw_margin = self.get_dxls_value('cw_compliance_margin', ax_names, clear_value=True, retry=retry)
+            ccw_margin = self.get_dxls_value('ccw_compliance_margin', ax_names, clear_value=True, retry=retry)
+            cw_slope = self.get_dxls_value('cw_compliance_slope', ax_names, clear_value=True, retry=retry)
+            ccw_slope = self.get_dxls_value('ccw_compliance_slope', ax_names, clear_value=True, retry=retry)
+            for name, cwm, ccwm, cws, ccws in zip(ax_names, cw_margin, ccw_margin, cw_slope, ccw_slope):
+                pids[name] = (cwm, ccwm, cws, ccws)
+
+        for name in joint_names:
+            orbita_name = name.partition('_')[0]
+            if orbita_name in self.orbitas:
+                orbita_pids = self.get_orbita_values('pid', orbita_name, clear_value=True, retry=retry)
+                for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), orbita_pids):
+                    pids[f'{orbita_name}_{disk}'] = val
+                pids[f'{orbita_name}_roll'] = (0.0, 0.0, 0.0)
+                pids[f'{orbita_name}_pitch'] = (0.0, 0.0, 0.0)
+                pids[f'{orbita_name}_yaw'] = (0.0, 0.0, 0.0)
+
+        return [pids[name] for name in joint_names]
+
     def set_joints_value(self, register: str, value_for_joint: Dict[str, float]):
         """Set the value for the specified joints."""
         dxl_values: Dict[str, float] = {}
@@ -253,6 +288,53 @@ class Reachy(GateProtocol):
                 return
             for orbita, values in orbita_values.items():
                 self.set_orbita_values(register, orbita, values)
+
+    def set_joints_pid(self, goal_pids: Dict[str, Tuple[float, float, float]]) -> None:
+        """Set the PIDs for the specified joints."""
+        dxl_pids: Dict[str, Tuple[float, float, float]] = {}
+        orbita_pids: Dict[str, Dict[str, Tuple[float, float, float]]] = {}
+
+        for name, value in goal_pids.items():
+            orbita_name, _, disk_name = name.partition('_')
+
+            if name in self.dxls:
+                dxl_pids[name] = value
+
+            elif orbita_name in self.orbitas:
+                if disk_name not in self.orbitas[orbita_name].get_disks_name():
+                    continue
+
+                if orbita_name not in orbita_pids:
+                    orbita_pids[orbita_name] = {}
+
+                orbita_pids[orbita_name][disk_name] = value
+            else:
+                raise ValueError(f'"{name}" is an unknown joints!')
+
+        if dxl_pids:
+            ax, other = {}, {}
+            for name, value in dxl_pids.items():
+                dxl = self.dxls[name]
+                if isinstance(dxl, AX18):
+                    ax[name] = value
+                else:
+                    other[name] = value
+
+            if ax:
+                cwm, ccwm, cws, ccws = zip(*ax.values())
+                self.set_joints_value('cw_compliance_margin', dict(zip(ax.keys(), cwm)))
+                self.set_joints_value('ccw_compliance_margin', dict(zip(ax.keys(), ccwm)))
+                self.set_joints_value('cw_compliance_slope', dict(zip(ax.keys(), cws)))
+                self.set_joints_value('ccw_compliance_slope', dict(zip(ax.keys(), ccws)))
+            if other:
+                p, i, d = zip(*other.values())
+                self.set_joints_value('p_gain', dict(zip(other.keys(), p)))
+                self.set_joints_value('i_gain', dict(zip(other.keys(), i)))
+                self.set_joints_value('d_gain', dict(zip(other.keys(), d)))
+
+        if orbita_pids:
+            for orbita, values in orbita_pids.items():
+                self.set_orbita_values('pid', orbita, values)
 
     def get_dxls_value(self, register: str, dxl_names: List[str], clear_value: bool, retry: int) -> List[float]:
         """Retrieve register value on the specified dynamixels.
