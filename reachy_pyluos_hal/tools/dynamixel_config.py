@@ -195,7 +195,7 @@ if __name__ == '__main__':
         try:
             containers = identify_luos_containers(args.port, logger)
             dxl_motors = get_dxl_motor_from_containers(containers, logger)
-            if dxl_motors == 'void_dxl':
+            if dxl_motors.alias == 'void_dxl':
                 print('No motor found! Check the connection and try again.')
                 change_dxl_baudrate(args.port, 1000000)
                 sys.exit(1)
