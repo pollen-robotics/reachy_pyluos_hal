@@ -235,7 +235,7 @@ class Reachy(GateProtocol):
             dxl_i = self.get_dxls_value('i_gain', dxl_names_with_pids, clear_value=True, retry=retry)
             dxl_d = self.get_dxls_value('d_gain', dxl_names_with_pids, clear_value=True, retry=retry)
             for name, p, i, d in zip(dxl_names_with_pids, dxl_p, dxl_i, dxl_d):
-                pids[name] = (p, i, d)
+                pids[name] = [float(gain) for gain in (p, i, d)]
 
         if ax_names:
             cw_margin = self.get_dxls_value('cw_compliance_margin', ax_names, clear_value=True, retry=retry)
@@ -243,17 +243,17 @@ class Reachy(GateProtocol):
             cw_slope = self.get_dxls_value('cw_compliance_slope', ax_names, clear_value=True, retry=retry)
             ccw_slope = self.get_dxls_value('ccw_compliance_slope', ax_names, clear_value=True, retry=retry)
             for name, cwm, ccwm, cws, ccws in zip(ax_names, cw_margin, ccw_margin, cw_slope, ccw_slope):
-                pids[name] = (cwm, ccwm, cws, ccws)
+                pids[name] = [float(gain) for gain in (cwm, ccwm, cws, ccws)]
 
         for name in joint_names:
             orbita_name = name.partition('_')[0]
             if orbita_name in self.orbitas:
                 orbita_pids = self.get_orbita_values('pid', orbita_name, clear_value=True, retry=retry)
                 for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), orbita_pids):
-                    pids[f'{orbita_name}_{disk}'] = val
-                pids[f'{orbita_name}_roll'] = (0.0, 0.0, 0.0)
-                pids[f'{orbita_name}_pitch'] = (0.0, 0.0, 0.0)
-                pids[f'{orbita_name}_yaw'] = (0.0, 0.0, 0.0)
+                    pids[f'{orbita_name}_{disk}'] = list(val)
+                pids[f'{orbita_name}_roll'] = [0.0, 0.0, 0.0]
+                pids[f'{orbita_name}_pitch'] = [0.0, 0.0, 0.0]
+                pids[f'{orbita_name}_yaw'] = [0.0, 0.0, 0.0]
 
         return [pids[name] for name in joint_names]
 
