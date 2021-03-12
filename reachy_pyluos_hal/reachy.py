@@ -298,7 +298,7 @@ class Reachy(GateProtocol):
             orbita_name, _, disk_name = name.partition('_')
 
             if name in self.dxls:
-                dxl_pids[name] = value
+                dxl_pids[name] = [int(gain) for gain in value]
 
             elif orbita_name in self.orbitas:
                 if disk_name not in self.orbitas[orbita_name].get_disks_name():
