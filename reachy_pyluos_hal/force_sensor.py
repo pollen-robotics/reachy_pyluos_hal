@@ -33,7 +33,7 @@ class ForceSensor:
         """Update force received from a gate update."""
         self.force.update(force)
 
-    def get_force(self, retry=3) -> float:
+    def get_force(self, retry: int = 10) -> float:
         """Retrieve the last updated force."""
         for _ in range(retry - 1):
             try:

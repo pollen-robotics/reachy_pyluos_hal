@@ -16,7 +16,7 @@ from .orbita import OrbitaActuator
 from .pycore import GateProtocol, LuosContainer
 
 
-def find_gate(devices: Dict[str, Device], ports: List[str], logger: Optional[Logger], retry: int = 3) -> Tuple[str, List[Device], List[Device]]:
+def find_gate(devices: Dict[str, Device], ports: List[str], logger: Optional[Logger], retry: int = 10) -> Tuple[str, List[Device], List[Device]]:
     """Try to identify the correct gate among possible serial ports based on the identified luos device."""
     solutions = {}
 
