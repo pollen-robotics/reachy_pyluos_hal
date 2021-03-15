@@ -65,11 +65,11 @@ def get_dxl(port, dxl_alias) -> DynamixelMotor:
         with ReaderThread(s, GateHandler) as p:
             # We first retrieve the model number using any model
             # (all models share the same register for ModelNumber)
-            p.dxl = AX18(dxl_id, 0, True)
+            p.dxl = AX18(dxl_id, 0, True, -3.14, 3.14)
             model_number = get_dxl_register(p, 'model_number')
             # Now we switch to the real model
             # to make sure all registers are correctly used.
-            return get_motor_from_model(model_number)(dxl_id, 0, True)
+            return get_motor_from_model(model_number)(dxl_id, 0, True, -3.14, 3.14)
 
 
 def read_eeprom(port, dxl):

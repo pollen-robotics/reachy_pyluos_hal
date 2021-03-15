@@ -36,11 +36,13 @@ class DynamixelError(Enum):
 class DynamixelMotor(Joint):
     """Dynamixel implentation of a Joint."""
 
-    def __init__(self, id: int, offset: float, direct: bool) -> None:
+    def __init__(self, id: int, offset: float, direct: bool, cw_angle_limit: float, ccw_angle_limit: float) -> None:
         """Set up the dynamixel motor with its id, and an offset and direction."""
         self.id = id
         self.offset = offset
         self.direct = direct
+        self.cw_angle_limit = cw_angle_limit
+        self.ccw_angle_limit = ccw_angle_limit
 
         super().__init__({
             'model_number': (self.model_to_usi, self.model_to_raw),
@@ -76,7 +78,7 @@ class DynamixelMotor(Joint):
 
     def __repr__(self) -> str:
         """Represent DynamixelMotor."""
-        return f'<DynamixelMotor type="{self.motor_type}" id={self.id}>'
+        return f'<DynamixelMotor type="{self.motor_type}" id={self.id} limits={self.cw_angle_limit, self.ccw_angle_limit}>'
 
     @abstractproperty
     def max_position(self) -> int:

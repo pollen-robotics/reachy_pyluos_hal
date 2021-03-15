@@ -97,6 +97,8 @@ def dxl_from_config(config: Dict[str, Any]) -> DynamixelMotor:
         id=config['id'],
         offset=config.get('offset', 0.0),
         direct=config.get('direct', True),
+        cw_angle_limit=config.get('cw_angle_limit', -3.14),
+        ccw_angle_limit=config.get('ccw_angle_limit', 3.14),
     )
 
 
