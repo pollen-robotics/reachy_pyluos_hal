@@ -5,14 +5,14 @@ import sys
 from collections import OrderedDict, defaultdict
 from glob import glob
 from logging import Logger
-from math import pi
 from operator import attrgetter
 from threading import Lock
 from typing import Dict, List, Tuple
 
+from .config import load_config
 from .device import Device
 from .discovery import find_gate
-from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18, XL320
+from .dynamixel import AX18, DynamixelMotor
 from .fan import DxlFan, Fan, OrbitaFan
 from .force_sensor import ForceSensor
 from .joint import Joint
@@ -23,44 +23,6 @@ from .pycore import GateClient, GateProtocol
 class Reachy(GateProtocol):
     """Reachy wrapper around serial GateClients which handle the communication with the hardware."""
 
-    devices: List[Dict[str, Device]] = [
-        OrderedDict([
-            ('r_shoulder_fan', DxlFan(id=10)),
-            ('r_shoulder_pitch', MX106(id=10, offset=pi/2, direct=False)),
-            ('r_shoulder_roll', MX64(id=11, offset=pi/2, direct=False)),
-            ('r_arm_yaw', MX64(id=12, offset=0.0, direct=False)),
-            ('r_elbow_fan', DxlFan(id=13)),
-            ('r_elbow_pitch', MX64(id=13, offset=0.0, direct=False)),
-            ('r_forearm_yaw', AX18(id=14, offset=0.0, direct=False)),
-            ('r_wrist_fan', DxlFan(id=15)),
-            ('r_wrist_pitch', MX28(id=15, offset=0.0, direct=False)),
-            ('r_wrist_roll', AX18(id=16, offset=0.0, direct=False)),
-            ('r_gripper', AX18(id=17, offset=0.0, direct=True)),
-            ('r_force_gripper', ForceSensor(id=10)),
-        ]),
-        OrderedDict([
-            ('l_shoulder_fan', DxlFan(id=20)),
-            ('l_shoulder_pitch', MX106(id=20, offset=pi/2, direct=True)),
-            ('l_shoulder_roll', MX64(id=21, offset=-pi/2, direct=False)),
-            ('l_arm_yaw', MX64(id=22, offset=0.0, direct=False)),
-            ('l_elbow_fan', DxlFan(id=23)),
-            ('l_elbow_pitch', MX64(id=23, offset=0.0, direct=False)),
-            ('l_forearm_yaw', AX18(id=24, offset=0.0, direct=False)),
-            ('l_wrist_fan', DxlFan(id=25)),
-            ('l_wrist_pitch', MX28(id=25, offset=0.0, direct=False)),
-            ('l_wrist_roll', AX18(id=26, offset=0.0, direct=False)),
-            ('l_gripper', AX18(id=27, offset=0.0, direct=True)),
-            ('l_force_gripper', ForceSensor(id=20)),
-        ]),
-        OrderedDict([
-            ('neck', OrbitaActuator(id=40)),
-            ('neck_fan', OrbitaFan(id=40, orbita='neck')),
-            ('l_antenna', XL320(id=30, offset=0, direct=True)),
-            ('r_antenna', XL320(id=31, offset=0, direct=True)),
-            ('head_left_fan', DxlFan(id=30)),
-            ('head_right_fan', DxlFan(id=31)),
-        ]),
-    ]
     if sys.platform == 'linux':
         port_template: str = '/dev/ttyUSB*'
     elif sys.platform == 'darwin':
@@ -68,9 +30,10 @@ class Reachy(GateProtocol):
     else:
         raise OSError('Unsupported platform')
 
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, config_filename: str, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
         self.logger = logger
+        self.config = load_config(config_filename)
 
         class GateProtocolDelegate(GateProtocol):
             lock = Lock()
@@ -113,7 +76,7 @@ class Reachy(GateProtocol):
         if len(self.ports) == 0:
             raise IOError(f'No Gate found on "{self.port_template}"')
 
-        for devices in self.devices:
+        for devices in self.config:
             self.logger.info(f'Looking for {list(devices.keys())} on {self.ports}.')
             port, matching, missing = find_gate(devices, self.ports, self.logger)
             if len(missing) > 0:
