@@ -74,7 +74,7 @@ def get_dxl(port, dxl_alias) -> DynamixelMotor:
 
 def read_eeprom(port, dxl):
     """Read and print the EEPROM configuration of a dynamixel motor."""
-    with Serial(args.port, baudrate=1000000) as s:
+    with Serial(port, baudrate=1000000) as s:
         with ReaderThread(s, GateHandler) as p:
             p.dxl = dxl
 
@@ -169,7 +169,8 @@ def get_dxl_motor_from_containers(containers, logger):
     return dxl_motors[0]
 
 
-if __name__ == '__main__':
+def main():
+    """Run main entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument('port')
     parser.add_argument('--id', type=int)
@@ -229,3 +230,7 @@ if __name__ == '__main__':
     dxl = get_dxl(args.port, dxl_motors.alias)
     write_eeprom(args.port, dxl, args)
     read_eeprom(args.port, dxl)
+
+
+if __name__ == '__main__':
+    main()

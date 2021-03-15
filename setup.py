@@ -15,6 +15,13 @@ setup(
         'PyYAML',
     ],
 
+    entry_points={
+        'console_scripts': [
+            'dynamixel-config=reachy_pyluos_hal.tools.dynamixel_config:main',
+            'reachy-dynamixel-config=reachy_pyluos_hal.tools.reachy_dynamixel_config:main',
+        ],
+    },
+
     author='Pollen Robotics',
     author_email='contact@pollen-robotics.com',
     url='https://github.com/pollen-robotics/reachy_mockup_hardware',
