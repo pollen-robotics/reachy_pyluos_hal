@@ -10,6 +10,8 @@ reachy:
       dxl_motor:
         type: XL-320
         id: 30
+        cw_angle_limit: -2.62
+        ccw_angle_limit: 2.62
     l_antenna_fan:
       fan:
         id: 30
@@ -17,6 +19,8 @@ reachy:
       dxl_motor:
         type: XL-320
         id: 31
+        cw_angle_limit: -2.62
+        ccw_angle_limit: 2.62
     r_antenna_fan:
       fan:
         id: 31
