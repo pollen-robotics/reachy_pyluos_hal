@@ -9,13 +9,14 @@ from .reachy import Reachy
 class JointLuos:
     """Implementation of the joint hal via serial communication to the luos boards."""
 
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, config_filename: str, logger: Logger) -> None:
         """Create and start Reachy which wraps serial Luos GateClients."""
         self.logger = logger
+        self.config_filename = config_filename
 
     def __enter__(self):
         """Enter context handler."""
-        self.reachy = Reachy(self.logger)
+        self.reachy = Reachy(config_filename=self.config_filename, logger=self.logger)
         self.reachy.__enter__()
 
         return self
