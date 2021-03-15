@@ -1,0 +1,129 @@
+reachy:
+  left_arm:
+    l_shoulder_fan:
+      fan:
+        id: 20
+    l_shoulder_pitch:
+      dxl_motor:
+        type: MX-106
+        id: 20
+        offset: 1.57
+    l_shoulder_roll:
+      dxl_motor:
+        type: MX-64
+        id: 21
+        offset: -1.57
+        direct: False
+    l_arm_yaw:
+      dxl_motor:
+        type: MX-64
+        id: 22
+        direct: False
+    l_elbow_fan:
+      fan:
+        id: 23
+    l_elbow_pitch:
+      dxl_motor:
+        type: MX-64
+        id: 23
+        direct: False
+    l_forearm_yaw:
+      dxl_motor:
+        type: AX-18
+        id: 24
+        direct: False
+    l_wrist_fan:
+      fan:
+        id: 25
+    l_wrist_pitch:
+      dxl_motor:
+        type: MX-28
+        id: 25
+        direct: False
+    l_wrist_roll:
+      dxl_motor:
+        type: AX-18
+        id: 26
+        direct: False
+    l_gripper:
+      dxl_motor:
+        type: AX-18
+        id: 27
+    l_force_gripper:
+      force_sensor:
+        id: 20
+  right_arm:
+    r_shoulder_fan:
+      fan:
+        id: 10
+    r_shoulder_pitch:
+      dxl_motor:
+        type: MX-106
+        id: 10
+        offset: 1.57
+        direct: False
+    r_shoulder_roll:
+      dxl_motor:
+        type: MX-64
+        id: 11
+        offset: -1.57
+        direct: False
+    r_arm_yaw:
+      dxl_motor:
+        type: MX-64
+        id: 12
+        direct: False
+    r_elbow_fan:
+      fan:
+        id: 13
+    r_elbow_pitch:
+      dxl_motor:
+        type: MX-64
+        id: 13
+        direct: False
+    r_forearm_yaw:
+      dxl_motor:
+        type: AX-18
+        id: 14
+        direct: False
+    r_wrist_fan:
+      fan:
+        id: 15
+    r_wrist_pitch:
+      dxl_motor:
+        type: MX-28
+        id: 15
+        direct: False
+    r_wrist_roll:
+      dxl_motor:
+        type: AX-18
+        id: 16
+        direct: False
+    r_gripper:
+      dxl_motor:
+        type: AX-18
+        id: 17
+    r_force_gripper:
+      force_sensor:
+        id: 10
+  head:
+    neck:
+      orbita_actuator:
+        id: 40
+    neck_fan:
+      fan:
+        id: 40
+    l_antenna:
+      dxl_motor:
+        type: XL-320
+        id: 30
+    l_antenna_fan:
+      fan:
+        id: 30
+    r_antenna:
+      dxl_motor:
+        type: XL-320
+        id: 31
+    r_antenna_fan:
+      fan:
+        id: 31
