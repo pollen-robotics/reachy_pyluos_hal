@@ -12,6 +12,7 @@ setup(
     install_requires=[
         'numpy',
         'pyserial',
+        'PyYAML',
     ],
 
     author='Pollen Robotics',
