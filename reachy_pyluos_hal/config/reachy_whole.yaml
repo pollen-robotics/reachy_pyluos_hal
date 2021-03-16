@@ -84,7 +84,7 @@ reachy:
       dxl_motor:
         type: MX-64
         id: 11
-        offset: -1.57
+        offset: 1.57
         direct: False
         cw_angle_limit: -1.75
         ccw_angle_limit: 1.57
