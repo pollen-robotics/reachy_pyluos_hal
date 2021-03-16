@@ -36,8 +36,8 @@ class DynamixelError(Enum):
 class DynamixelMotor(Joint):
     """Dynamixel implentation of a Joint."""
 
-    def __init__(self, id: int, 
-                 offset: float, direct: bool, 
+    def __init__(self, id: int,
+                 offset: float, direct: bool,
                  cw_angle_limit: float, ccw_angle_limit: float,
                  reduction: float,
                  ) -> None:
