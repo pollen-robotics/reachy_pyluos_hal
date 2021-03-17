@@ -1,6 +1,7 @@
 """Reachy wrapper around serial LUOS GateClients which handle the communication with the hardware."""
 
 import sys
+import time
 
 from collections import OrderedDict, defaultdict
 from glob import glob
@@ -341,6 +342,10 @@ class Reachy(GateProtocol):
                 self.logger.warning(f'Timeout occurs after GET cmd: dev="{missing_dxls}" reg="{register}"!')
             if retry == 0:
                 raise e
+            if register in ('present_position', 'temperature'):
+                # We are waiting for te module to send us the data
+                # So wait before retrying
+                time.sleep(1)
             return self.get_dxls_value(register, dxl_names, clear_value, retry - 1)
 
     def set_dxls_value(self, register: str, values_for_dxls: Dict[str, float]):
@@ -394,6 +399,10 @@ class Reachy(GateProtocol):
                 self.logger.warning(f'Timeout occurs after GET cmd: dev="{orbita_name}" reg="{register_name}"!')
             if retry == 0:
                 raise e
+            if register_name in ('present_position', 'temperature'):
+                # We are waiting for te module to send us the data
+                # So wait before retrying
+                time.sleep(1)
             return self.get_orbita_values(register_name, orbita_name, clear_value, retry - 1)
 
     def set_orbita_values(self, register_name: str, orbita_name: str, value_for_disks: Dict[str, float]):
