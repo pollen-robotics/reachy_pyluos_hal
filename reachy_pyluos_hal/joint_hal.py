@@ -1,4 +1,5 @@
 """Implementation of the joint reachy_ros_hal via serial communication to the luos board."""
+import time
 
 from typing import Dict, List, Optional, Tuple
 from logging import Logger
@@ -16,10 +17,16 @@ class JointLuos:
 
     def __enter__(self):
         """Enter context handler."""
-        self.reachy = Reachy(config_filename=self.config_filename, logger=self.logger)
-        self.reachy.__enter__()
-
-        return self
+        for _ in range(5):
+            try:
+                self.reachy = Reachy(config_filename=self.config_filename, logger=self.logger)
+                self.reachy.__enter__()
+                return self
+            except TimeoutError as e:
+                self.logger.warning(f'Hal connection failed with {str(e)}. Will retry...')
+                # Most likely due a Gate detection fail
+                # Simply wait for the watchdog to reboot it.
+                time.sleep(2)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Stop and close."""
