@@ -65,6 +65,7 @@ reachy:
         id: 27
         cw_angle_limit: -0.70
         ccw_angle_limit: 2.40
+        reduction: -2
     l_force_gripper:
       force_sensor:
         id: 20
@@ -135,6 +136,7 @@ reachy:
         id: 17
         cw_angle_limit: -2.40
         ccw_angle_limit: 0.70
+        reduction: -2
     r_force_gripper:
       force_sensor:
         id: 10
