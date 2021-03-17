@@ -36,13 +36,18 @@ class DynamixelError(Enum):
 class DynamixelMotor(Joint):
     """Dynamixel implentation of a Joint."""
 
-    def __init__(self, id: int, offset: float, direct: bool, cw_angle_limit: float, ccw_angle_limit: float) -> None:
+    def __init__(self, id: int,
+                 offset: float, direct: bool,
+                 cw_angle_limit: float, ccw_angle_limit: float,
+                 reduction: float,
+                 ) -> None:
         """Set up the dynamixel motor with its id, and an offset and direction."""
         self.id = id
         self.offset = offset
         self.direct = direct
         self.cw_angle_limit = cw_angle_limit
         self.ccw_angle_limit = ccw_angle_limit
+        self.reduction = reduction
 
         super().__init__({
             'model_number': (self.model_to_usi, self.model_to_raw),
@@ -191,6 +196,7 @@ class DynamixelMotor(Joint):
 
     def position_to_raw(self, value: float) -> bytes:
         """Convert position (in rad) to raw."""
+        value *= self.reduction
         value = (value + self.offset) * (1 if self.direct else -1)
         pos_ratio = (value + self.max_radian / 2) / self.max_radian
         pos_ratio = np.clip(pos_ratio, 0, 1)
@@ -206,6 +212,7 @@ class DynamixelMotor(Joint):
                 dxl_raw_pos = np.clip(dxl_raw_pos, 0, self.max_position)
         pos_ratio = dxl_raw_pos / (self.max_position - 1)
         pos = (pos_ratio * self.max_radian) - self.max_radian / 2
+        pos /= self.reduction
         return (pos if self.direct else -pos) - self.offset
 
     def speed_to_raw(self, value: float) -> bytes:
