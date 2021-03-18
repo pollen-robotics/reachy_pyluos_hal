@@ -27,6 +27,8 @@ class GateProtocol(Protocol):
     MSG_TYPE_DXL_SET_POS_PUB_PERIOD = 14
     MSG_TYPE_DXL_PUB_DATA = 15
     MSG_TYPE_LOAD_PUB_DATA = 20
+    MSG_TYPE_LOAD_TARE = 21
+    MSG_TYPE_LOAD_SET_SCALE = 22
     MSG_TYPE_FAN_GET_STATE = 30
     MSG_TYPE_FAN_SET_STATE = 31
     MSG_TYPE_FAN_PUB_DATA = 35
@@ -151,6 +153,15 @@ class GateProtocol(Protocol):
         msg = [self.MSG_TYPE_FAN_SET_STATE]
         for fan_id, fan_state in state_for_fan.items():
             msg += [fan_id, fan_state]
+        self.send_msg(bytes(msg))
+
+    def send_force_sensor_tare_message(self, id: int):
+        """Send a tare message to a force sensor [MSG_TYPE_LOAD_TARE, ID]."""
+        self.send_msg(bytes([self.MSG_TYPE_LOAD_TARE, id]))
+
+    def send_force_sensor_new_scale(self, id: int, scale: float):
+        """Send a new scale to a force sensor [MSG_TYPE_LOAD_SET_SCALE, ID, FLOAT]."""
+        msg = [self.MSG_TYPE_LOAD_SET_SCALE, id] + list(struct.pack('f', scale))
         self.send_msg(bytes(msg))
 
     def pop_messages(self) -> Iterable[bytearray]:
