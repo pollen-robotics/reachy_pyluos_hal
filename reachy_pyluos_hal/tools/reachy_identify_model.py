@@ -17,29 +17,29 @@ import yaml
 DEFAULT_MODEL = 'reachy'
 
 
-def print_model_and_leave(model: str, success: bool):
+def print_model_and_leave(model: str):
     """Print the model found on stdout and exit."""
     print(model)
-    sys.exit(0 if success else 1)
+    sys.exit(0)
 
 
 def main():
     """Run model identification checks."""
     model = os.getenv('REACHY_MODEL')
     if model is not None:
-        print_model_and_leave(model, success=True)
+        print_model_and_leave(model)
 
     config_file = os.getenv('REACHY_CONFIG_FILE', default=os.path.expanduser('~/.reachy.yaml'))
     if not os.path.exists(config_file):
-        print_model_and_leave(DEFAULT_MODEL, success=False)
+        print_model_and_leave(DEFAULT_MODEL)
 
     with open(config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         if 'model' not in config:
-            print_model_and_leave(DEFAULT_MODEL, success=False)
+            print_model_and_leave(DEFAULT_MODEL)
 
         model = config['model']
-        print_model_and_leave(model, success=True)
+        print_model_and_leave(model)
 
 
 if __name__ == '__main__':
