@@ -63,8 +63,8 @@ reachy:
       dxl_motor:
         type: AX-18
         id: 27
-        cw_angle_limit: -0.70
-        ccw_angle_limit: 2.40
+        cw_angle_limit: -1.70
+        ccw_angle_limit: 0.90
         reduction: -2
     l_force_gripper:
       force_sensor:
@@ -134,8 +134,8 @@ reachy:
       dxl_motor:
         type: AX-18
         id: 17
-        cw_angle_limit: -2.40
-        ccw_angle_limit: 0.70
+        cw_angle_limit: -0.90
+        ccw_angle_limit: 1.70
         reduction: -2
     r_force_gripper:
       force_sensor:
