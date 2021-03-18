@@ -15,6 +15,8 @@ setup(
         'PyYAML',
     ],
 
+    package_data={'': ['config/*.yaml']},
+
     entry_points={
         'console_scripts': [
             'dynamixel-config=reachy_pyluos_hal.tools.dynamixel_config:main',
