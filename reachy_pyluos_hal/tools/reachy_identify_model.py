@@ -2,7 +2,7 @@
 
 To determine the model we:
 - read the environment variable REACHY_MODEL if it exists (eg. EXPORT REACHY_MODEL="reachy_right_arm")
-- the presence of a config file located at REACHY_CONFIG_FILE (or ~/.reachy by default)
+- the presence of a config file located at REACHY_CONFIG_FILE (or ~/.reachy.yaml by default)
 - assume you are using a standard Reachy (both arms and head).
 
 While you could easily check the same values in your own program,
