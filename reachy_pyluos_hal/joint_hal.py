@@ -10,16 +10,16 @@ from .reachy import Reachy
 class JointLuos:
     """Implementation of the joint hal via serial communication to the luos boards."""
 
-    def __init__(self, config_filename: str, logger: Logger) -> None:
+    def __init__(self, config_name: str, logger: Logger) -> None:
         """Create and start Reachy which wraps serial Luos GateClients."""
         self.logger = logger
-        self.config_filename = config_filename
+        self.config_name = config_name
 
     def __enter__(self):
         """Enter context handler."""
         for _ in range(5):
             try:
-                self.reachy = Reachy(config_filename=self.config_filename, logger=self.logger)
+                self.reachy = Reachy(config_name=self.config_name, logger=self.logger)
                 self.reachy.__enter__()
                 return self
             except TimeoutError as e:

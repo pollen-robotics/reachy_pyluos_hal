@@ -14,7 +14,7 @@ import sys
 
 import yaml
 
-DEFAULT_MODEL = 'reachy'
+DEFAULT_MODEL = 'full_kit'
 
 
 def print_model_and_leave(model: str):

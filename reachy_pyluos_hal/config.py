@@ -1,4 +1,5 @@
 """Module responsible for loading and parsing config files."""
+from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
 import yaml
@@ -10,25 +11,56 @@ from .force_sensor import ForceSensor
 from .orbita import OrbitaActuator
 
 
-def load_config(filename: str) -> List[Dict[str, Device]]:
-    """Load and parse a config file and returns all devices in it."""
-    with open(filename) as f:
-        conf = yaml.load(f, Loader=yaml.FullLoader)
+def load_config(config_name: str) -> List[Dict[str, Device]]:
+    """Load and parse part config files corresponding to config and returns all devices in it."""
+    configs = {
+        'full_kit': ['left_arm', 'right_arm', 'head'],
+        'full_kit_left_advanced': ['left_arm_advanced', 'right_arm', 'head'],
+        'full_kit_right_advanced': ['left_arm', 'right_arm_advanced', 'head'],
+        'full_kit_full_advanced': ['left_arm_advanced', 'right_arm_advanced', 'head'],
+
+        'starter_kit_left': ['left_arm', 'head'],
+        'starter_kit_left_advanced': ['left_arm_advanced', 'head'],
+        'starter_kit_right': ['right_arm', 'head'],
+        'starter_kit_right_advanced': ['right_arm_advanced', 'head'],
+
+        'robotic_arm_left': ['left_arm'],
+        'robotic_arm_left_advanced': ['left_arm_advanced'],
+        'robotic_arm_right': ['right_arm'],
+        'robotic_arm_right_advanced': ['right_arm_advanced'],
+    }
 
     devices = []
-    for part, config in conf['reachy'].items():
-        joints = joints_from_config(config)
-        fans = fans_from_config(config, joints)
-        sensors = sensors_from_config(config)
 
-        part_devices: Dict[str, Device] = {}
-        part_devices.update(joints)
-        part_devices.update(fans)
-        part_devices.update(sensors)
+    try:
+        config = configs[config_name]
+    except KeyError:
+        raise KeyError(f'{config_name} should be one of {list(configs.keys())}')
 
-        devices.append(part_devices)
+    for part_name in config:
+        filename = get_part_config_file(part_name)
+        with open(filename) as f:
+            part_conf = yaml.load(f, Loader=yaml.FullLoader)
+
+        for part, config in part_conf.items():
+            joints = joints_from_config(config)
+            fans = fans_from_config(config, joints)
+            sensors = sensors_from_config(config)
+
+            part_devices: Dict[str, Device] = {}
+            part_devices.update(joints)
+            part_devices.update(fans)
+            part_devices.update(sensors)
+
+            devices.append(part_devices)
 
     return devices
+
+
+def get_part_config_file(part_name: str) -> Path:
+    """Find the configuration file for the given robot part."""
+    import reachy_pyluos_hal
+    return Path(reachy_pyluos_hal.__file__).parent / 'config' / f'{part_name}.yaml'
 
 
 def joints_from_config(config: Dict[str, Dict[str, Dict[str, Any]]]) -> Dict[str, Union[DynamixelMotor, OrbitaActuator]]:
