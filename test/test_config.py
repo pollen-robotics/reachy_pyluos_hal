@@ -87,6 +87,9 @@ def test_wrong_config():
     with pytest.raises(KeyError):
         load_config('robotic_arm')
 
+    with pytest.raises(KeyError):
+        load_config('reachy_full_kit')
+
 
 def check_full_kit(conf):
     assert len(conf) == 3
