@@ -27,7 +27,7 @@ setup(
 
     author='Pollen Robotics',
     author_email='contact@pollen-robotics.com',
-    url='https://github.com/pollen-robotics/reachy_mockup_hardware',
+    url='https://github.com/pollen-robotics/reachy_pyluos_hal',
 
     description='Reachy HAL implementation via Pyluos',
 )
