@@ -31,10 +31,10 @@ class Reachy(GateProtocol):
     else:
         raise OSError('Unsupported platform')
 
-    def __init__(self, config_filename: str, logger: Logger) -> None:
+    def __init__(self, config_name: str, logger: Logger) -> None:
         """Create all GateClient defined in the devices class variable."""
         self.logger = logger
-        self.config = load_config(config_filename)
+        self.config = load_config(config_name)
 
         class GateProtocolDelegate(GateProtocol):
             lock = Lock()
