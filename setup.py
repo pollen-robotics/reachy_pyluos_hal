@@ -29,5 +29,5 @@ setup(
     author_email='contact@pollen-robotics.com',
     url='https://github.com/pollen-robotics/reachy_pyluos_hal',
 
-    description='Reachy HAL implementation via Pyluos',
+    description='Reachy hardware library controller',
 )
