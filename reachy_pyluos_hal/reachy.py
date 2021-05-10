@@ -475,17 +475,25 @@ class Reachy(GateProtocol):
         for id, err, val in zip(ids, errors, values):
             if (err != 0) and self.logger is not None:
                 self.logger.warning(f'Dynamixel error {err} on motor id={id}!')
-
+            if id not in self.dxl4id and self.logger is not None:
+                self.logger.info(f'Dynamixel id={id} not in config!')
+                continue
             m = self.dxl4id[id]
             m.update_value(m.find_register_by_addr(addr), val)
 
     def handle_load_pub_data(self, ids: List[int], values: List[bytes]):
         """Handle load update received on a gate client."""
         for id, val in zip(ids, values):
+            if id not in self.force4id and self.logger is not None:
+                self.logger.info(f'Force sensor id={id} not in config!')
+                continue
             self.force4id[id].update_force(val)
 
     def handle_orbita_pub_data(self, orbita_id: int, reg_type: OrbitaRegister, values: bytes):
         """Handle orbita update received on a gate client."""
+        if orbita_id not in self.orbita4id and self.logger is not None:
+            self.logger.info(f'Orbita id={orbita_id} not in config!')
+            return
         self.orbita4id[orbita_id].update_value(reg_type, values)
 
     def handle_fan_pub_data(self, fan_ids: List[int], states: List[int]):
