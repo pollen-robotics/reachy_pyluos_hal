@@ -248,7 +248,7 @@ class Reachy(GateProtocol):
         if orbita_values:
             if register == 'moving_speed':
                 if self.logger is not None:
-                    self.logger.info('Speed for orbita not handled!')
+                    self.logger.debug('Speed for orbita not handled!')
                 return
             for orbita, values in orbita_values.items():
                 self.set_orbita_values(register, orbita, values)
