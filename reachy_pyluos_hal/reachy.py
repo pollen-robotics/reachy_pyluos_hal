@@ -28,6 +28,8 @@ class Reachy(GateProtocol):
         port_template: str = '/dev/ttyUSB*'
     elif sys.platform == 'darwin':
         port_template: str = '/dev/tty.usbserial*'
+    elif sys.platform == 'win32':
+        port_template: str = 'COM*'
     else:
         raise OSError('Unsupported platform')
 
