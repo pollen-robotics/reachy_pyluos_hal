@@ -478,7 +478,7 @@ class Reachy(GateProtocol):
             if (err != 0) and self.logger is not None:
                 self.logger.warning(f'Dynamixel error {err} on motor id={id}!')
             if id not in self.dxl4id and self.logger is not None:
-                self.logger.info(f'Dynamixel id={id} not in config!')
+                self.logger.debug(f'Dynamixel id={id} not in config!')
                 continue
             m = self.dxl4id[id]
             m.update_value(m.find_register_by_addr(addr), val)
