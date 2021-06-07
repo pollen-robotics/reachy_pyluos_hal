@@ -143,6 +143,7 @@ class Reachy(GateProtocol):
             zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True, retry=10)]
             pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True, retry=10)]
             orbita.set_offset(zero, pos)
+            self.set_orbita_values('recalibrate', name, {'disk_top': True})
 
     def get_all_joints_names(self) -> List[str]:
         """Return the names of all joints."""
