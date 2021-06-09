@@ -123,6 +123,7 @@ class OrbitaDisk:
         self.pid = Register(self.gain_as_usi, self.gain_as_raw)
         self.zero = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
         self.absolute_position = Register(self.encoder_position_as_usi, self.encoder_position_as_raw)
+        self.recalibrate = Register(self.state_as_usi, self.state_as_raw)
         self.magnetic_quality = Register(self.quality_as_usi, self.quality_as_raw)
         self.fan_state = Register(self.state_as_usi, self.state_as_raw)
         self.fan_trigger_temperature_threshold = Register(self.temperature_as_usi, self.temperature_as_raw)
