@@ -74,6 +74,7 @@ class DynamixelMotor(Joint):
             'torque_limit': (self.torque_to_usi, self.torque_to_raw),
             'present_position': (self.position_to_usi, self.position_to_raw),
             'temperature': (self.temperature_to_usi, self.temperature_to_raw),
+            'present_load': (self.present_load_to_usi, self.present_load_to_raw),
         })
 
     @abstractproperty
@@ -261,6 +262,21 @@ class DynamixelMotor(Joint):
         """Convert gain to raw."""
         return pack('B', gain)
 
+    def present_load_to_raw(self, value: float) -> bytes:
+        """Convert present_load to raw."""
+        raise AssertionError
+
+    def present_load_to_usi(self, value: bytes) -> float:
+        """Convert present_load to usi."""
+        dxl_load = unpack('H', value)[0]
+        assert 0 <= dxl_load < 2048
+        if dxl_load > 1023:
+            cw = True
+            dxl_load -= 1024
+        else:
+            cw = False
+
+        return -dxl_load if cw else dxl_load
 
 class DynamixelMotorV1(DynamixelMotor):
     """Specific motor using protocol V1 registers."""
@@ -284,6 +300,7 @@ class DynamixelMotorV1(DynamixelMotor):
         'torque_limit': (34, 2),
         'present_position': (36, 2),
         'temperature': (43, 1),
+        'present_load': (40,2),
     }
 
 
@@ -309,6 +326,7 @@ class DynamixelMotorV2(DynamixelMotor):
         'torque_limit': (35, 2),
         'present_position': (37, 2),
         'temperature': (46, 1),
+        'present_load': (41,2),
     }
 
 

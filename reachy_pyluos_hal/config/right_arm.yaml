@@ -65,7 +65,7 @@ right_arm:
       id: 17
       cw_angle_limit: -0.90
       ccw_angle_limit: 1.70
-      reduction: -2
+      reduction: 1
   r_force_gripper:
     force_sensor:
       id: 10

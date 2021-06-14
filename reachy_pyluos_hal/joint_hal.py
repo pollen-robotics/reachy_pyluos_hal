@@ -50,7 +50,13 @@ class JointLuos:
 
     def get_joint_efforts(self, names: List[str]) -> Optional[List[float]]:
         """Return the current effort of the specified joints."""
-        pass
+        loads = []
+        for n in names:
+            if n == 'l_elbow_pitch':
+                loads.append(float(self.reachy.get_dxls_value("present_load",["l_elbow_pitch"],True,3)[0]))
+            else:
+                loads.append(0.0)
+        return loads
 
     def get_joint_temperatures(self, names: List[str]) -> List[float]:
         """Return the current temperature (in C) of the specified joints."""
