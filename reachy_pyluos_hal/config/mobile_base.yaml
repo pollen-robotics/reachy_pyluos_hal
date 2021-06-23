@@ -1,0 +1,25 @@
+car:
+  l_front:
+    dxl_motor:
+      type: XL-320
+      id: 40
+      cw_angle_limit: -2.62
+      ccw_angle_limit: 2.62
+  r_front:
+    dxl_motor:
+      type: XL-320
+      id: 41
+      cw_angle_limit: -2.62
+      ccw_angle_limit: 2.62
+  l_rear:
+    dxl_motor:
+      type: XL-320
+      id: 42
+      cw_angle_limit: -2.62
+      ccw_angle_limit: 2.62
+  r_rear:
+    dxl_motor:
+      type: XL-320
+      id: 43
+      cw_angle_limit: -2.62
+      ccw_angle_limit: 2.62

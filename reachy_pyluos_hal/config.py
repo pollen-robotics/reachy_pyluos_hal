@@ -30,6 +30,7 @@ def load_config(config_name: str) -> List[Dict[str, Device]]:
         'robotic_arm_right_advanced': ['right_arm_advanced'],
 
         'orbita': ['orbita'],
+        'mobile_base': ['mobile_base'],
     }
 
     devices = []
