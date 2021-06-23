@@ -217,9 +217,11 @@ class DynamixelMotor(Joint):
 
     def speed_to_raw(self, value: float) -> bytes:
         """Convert speed (in rad/s) to raw."""
-        assert value >= 0
         rpm = abs(value) / (2 * pi) * 60
         dxl_speed = clip(int(rpm / 0.114), 0, 1023)
+        if value < 0:
+            dxl_speed += 1024
+
         return pack('H', dxl_speed)
 
     def speed_to_usi(self, value: bytes) -> float:
