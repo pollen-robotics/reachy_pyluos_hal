@@ -55,7 +55,7 @@ class JointLuos:
             if n in self.reachy.dxls:
                 try:
                     current = float(self.reachy.get_dxls_value('current', [n], True, 3)[0])
-                except KeyError as e:
+                except KeyError:
                     current = 0.0
                 efforts.append(current)
 

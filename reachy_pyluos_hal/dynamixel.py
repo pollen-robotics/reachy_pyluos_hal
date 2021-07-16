@@ -76,7 +76,7 @@ class DynamixelMotor(Joint):
             'present_load': (self.present_load_to_usi, self.present_load_to_raw),
             'temperature': (self.temperature_to_usi, self.temperature_to_raw),
             'current': (self.current_to_usi, self.current_to_raw),
-       })
+        })
 
     @abstractproperty
     def dxl_config(self) -> Dict[str, Tuple[int, int]]:
