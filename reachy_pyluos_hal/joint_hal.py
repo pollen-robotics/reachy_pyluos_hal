@@ -53,7 +53,10 @@ class JointLuos:
         efforts = []
         for n in names:
             if n in self.reachy.dxls:
-                current = float(self.reachy.get_dxls_value('current', [n], True, 3)[0])
+                try:
+                    current = float(self.reachy.get_dxls_value('current', [n], True, 3)[0])
+                except KeyError as e:
+                    current = 0.0
                 efforts.append(current)
 
             else:

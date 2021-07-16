@@ -313,6 +313,7 @@ class DynamixelMotorV1(DynamixelMotor):
         'present_position': (36, 2),
         'present_load': (40, 2),
         'temperature': (43, 1),
+        'current': (68, 2),
     }
 
 
@@ -339,7 +340,6 @@ class DynamixelMotorV2(DynamixelMotor):
         'present_position': (37, 2),
         'present_load': (40, 2),
         'temperature': (46, 1),
-        'current': (68, 2),
     }
 
 
