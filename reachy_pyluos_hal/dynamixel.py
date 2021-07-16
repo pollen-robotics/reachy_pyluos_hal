@@ -73,8 +73,10 @@ class DynamixelMotor(Joint):
             'moving_speed': (self.speed_to_usi, self.speed_to_raw),
             'torque_limit': (self.torque_to_usi, self.torque_to_raw),
             'present_position': (self.position_to_usi, self.position_to_raw),
+            'present_load': (self.present_load_to_usi, self.present_load_to_raw),
             'temperature': (self.temperature_to_usi, self.temperature_to_raw),
-        })
+            'current': (self.current_to_usi, self.current_to_raw),
+       })
 
     @abstractproperty
     def dxl_config(self) -> Dict[str, Tuple[int, int]]:
@@ -261,6 +263,32 @@ class DynamixelMotor(Joint):
         """Convert gain to raw."""
         return pack('B', gain)
 
+    def present_load_to_raw(self, value: float) -> bytes:
+        """Convert present_load to raw."""
+        raise AssertionError
+
+    def present_load_to_usi(self, value: bytes) -> float:
+        """Convert present_load to usi."""
+        dxl_load = unpack('H', value)[0]
+        assert 0 <= dxl_load < 2048
+        if dxl_load > 1023:
+            cw = True
+            dxl_load -= 1024
+        else:
+            cw = False
+
+        return -dxl_load if cw else dxl_load
+
+    def current_to_raw(self, value: float) -> bytes:
+        """Convert current to raw."""
+        raw = value / 4.5e-3 + 2048
+        return pack('H', raw)
+
+    def current_to_usi(self, value: bytes) -> float:
+        """Convert current to usi (A)."""
+        current = unpack('H', value)[0]
+        return 4.5e-3 * (current - 2048)
+
 
 class DynamixelMotorV1(DynamixelMotor):
     """Specific motor using protocol V1 registers."""
@@ -283,6 +311,7 @@ class DynamixelMotorV1(DynamixelMotor):
         'moving_speed': (32, 2),
         'torque_limit': (34, 2),
         'present_position': (36, 2),
+        'present_load': (40, 2),
         'temperature': (43, 1),
     }
 
@@ -308,7 +337,9 @@ class DynamixelMotorV2(DynamixelMotor):
         'moving_speed': (32, 2),
         'torque_limit': (35, 2),
         'present_position': (37, 2),
+        'present_load': (40, 2),
         'temperature': (46, 1),
+        'current': (68, 2),
     }
 
 
