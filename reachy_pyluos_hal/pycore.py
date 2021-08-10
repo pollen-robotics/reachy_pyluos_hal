@@ -81,6 +81,7 @@ class GateProtocol(Protocol):
         """Handle new received data."""
         self.buffer.extend(data)
 
+        # TODO: Remove from the cb
         for msg in self.pop_messages():
             self.handle_message(msg)
 
@@ -172,15 +173,15 @@ class GateProtocol(Protocol):
             if len(self.buffer) < 3:
                 break
 
-            if self.buffer[0] != 255:
-                self.logger.warning(f'Corrupted buffer {self.buffer}')
-                self.buffer = self.buffer[1:]
-                continue
-
             if self.buffer[0] != 255 or self.buffer[1] != 255:
-                data = self.transport.serial.read(self.transport.serial.in_waiting)
-                self.buffer.extend(data)
-                raise IOError(f'Corrupted buffer {self.buffer}')
+                self.logger.warning(f'Corrupted buffer {self.buffer}')
+
+                start = self.buffer.find(bytearray([255, 255]))
+                if start == -1:
+                    self.buffer.clear()
+                else:
+                    self.buffer = self.buffer[start:]
+                continue
 
             payload_size = self.buffer[2]
             if len(self.buffer) < 3 + payload_size:
