@@ -171,6 +171,12 @@ class GateProtocol(Protocol):
         while True:
             if len(self.buffer) < 3:
                 break
+
+            if self.buffer[0] != 255:
+                self.logger.warning(f'Corrupted buffer {self.buffer}')
+                self.buffer = self.buffer[1:]
+                continue
+
             if self.buffer[0] != 255 or self.buffer[1] != 255:
                 data = self.transport.serial.read(self.transport.serial.in_waiting)
                 self.buffer.extend(data)
