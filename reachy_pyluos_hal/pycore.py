@@ -84,7 +84,7 @@ class GateProtocol(Protocol):
         for msg in self.pop_messages():
             try:
                 self.handle_message(msg)
-            except:
+            except Exception:
                 if self.logger is not None:
                     self.logger.exception(f'Error happened during handling of corrupted message {msg}')
                 else:
