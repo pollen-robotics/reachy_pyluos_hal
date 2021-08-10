@@ -81,9 +81,14 @@ class GateProtocol(Protocol):
         """Handle new received data."""
         self.buffer.extend(data)
 
-        # TODO: Remove from the cb
         for msg in self.pop_messages():
-            self.handle_message(msg)
+            try:
+                self.handle_message(msg)
+            except:
+                if self.logger is not None:
+                    self.logger.exception(f'Error happened during handling of corrupted message {msg}')
+                else:
+                    raise
 
     def send_msg(self, payload: bytes):
         """Send message with specified payload."""
