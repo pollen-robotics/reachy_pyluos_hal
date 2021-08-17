@@ -82,7 +82,13 @@ class GateProtocol(Protocol):
         self.buffer.extend(data)
 
         for msg in self.pop_messages():
-            self.handle_message(msg)
+            try:
+                self.handle_message(msg)
+            except Exception:
+                if self.logger is not None:
+                    self.logger.exception(f'Error happened during handling of corrupted message {msg}')
+                else:
+                    raise
 
     def send_msg(self, payload: bytes):
         """Send message with specified payload."""
@@ -171,10 +177,16 @@ class GateProtocol(Protocol):
         while True:
             if len(self.buffer) < 3:
                 break
+
             if self.buffer[0] != 255 or self.buffer[1] != 255:
-                data = self.transport.serial.read(self.transport.serial.in_waiting)
-                self.buffer.extend(data)
-                raise IOError(f'Corrupted buffer {self.buffer}')
+                self.logger.warning(f'Corrupted buffer {self.buffer}')
+
+                start = self.buffer.find(bytearray([255, 255]))
+                if start == -1:
+                    self.buffer.clear()
+                else:
+                    self.buffer = self.buffer[start:]
+                continue
 
             payload_size = self.buffer[2]
             if len(self.buffer) < 3 + payload_size:
