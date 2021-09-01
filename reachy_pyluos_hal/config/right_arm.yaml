@@ -57,15 +57,23 @@ right_arm:
       type: AX-18
       id: 16
       direct: False
-      cw_angle_limit: -0.95
-      ccw_angle_limit: 0.61
-  r_gripper:
-    dxl_motor:
-      type: AX-18
-      id: 17
-      cw_angle_limit: -0.90
-      ccw_angle_limit: 1.70
-      reduction: -2
-  r_force_gripper:
-    force_sensor:
-      id: 10
+      cw_angle_limit: -0.79
+      ccw_angle_limit: 0.79
+  _motor_a:
+    type: XL-320
+    id: 3
+    direct: True
+    cw_angle_limit: -2.15
+    ccw_angle_limit: 2.44
+  _motor_b:
+    type: XL-320
+    id: 5
+    direct: True
+    cw_angle_limit: -2.62
+    ccw_angle_limit: 2.04
+  _motor_lift:
+    type: XL-320
+    id: 7
+    direct: True
+    cw_angle_limit: -2.62
+    ccw_angle_limit: 2.62
