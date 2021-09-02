@@ -374,10 +374,21 @@ class Reachy(GateProtocol):
         dxl_data_per_gate: Dict[GateClient, Dict[int, bytes]] = defaultdict(dict)
         dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
 
+        xl_data_per_gate = defaultdict(dict)
+        xl_rep_per_gate = {}
+
         for name, dxl_value in values_for_dxls.items():
             dxl = self.dxls[name]
 
-            if isinstance(dxl, DynamixelMotor):
+            if isinstance(dxl, XL320):
+                self.dxl4id[dxl.id].update_value_using_usi(register, dxl_value)
+
+                if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
+                    gate = self.gate4name[name]
+                    xl_data_per_gate[gate][dxl.id] = self.dxl4id[dxl.id].get_value(register)
+                    xl_rep_per_gate[gate] = self.dxl4id[dxl.id].get_register_config(register)
+
+            elif isinstance(dxl, DynamixelMotor):
                 self.dxl4id[dxl.id].update_value_using_usi(register, dxl_value)
 
                 if self._is_torque_enable(name) or register not in ['goal_position', 'moving_speed']:
@@ -387,6 +398,12 @@ class Reachy(GateProtocol):
 
         for gate, value_for_id in dxl_data_per_gate.items():
             addr, num_bytes = dxl_reg_per_gate[gate]
+            gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
+
+        time.sleep(0.01)
+
+        for gate, value_for_id in xl_data_per_gate.items():
+            addr, num_bytes = xl_rep_per_gate[gate]
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
 
         if register == 'torque_enable':
