@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 from .config import load_config
 from .device import Device
 from .discovery import find_gate
-from .dynamixel import AX18, DynamixelMotor
+from .dynamixel import AX18, XL320, DynamixelMotor
 from .fan import DxlFan, Fan, OrbitaFan
 from .force_sensor import ForceSensor
 from .joint import Joint
@@ -316,18 +316,31 @@ class Reachy(GateProtocol):
         dxl_ids_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
         dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
 
+        xl_reg_per_gate = {}
+
         for name in dxl_names:
             dxl = self.dxls[name]
             if clear_value:
                 dxl.clear_value(register)
 
             if clear_value or (not dxl.is_value_set(register)):
-                if isinstance(dxl, DynamixelMotor):
+                if isinstance(dxl, XL320):
+                    gate = self.gate4name[name]
+                    xl_reg_per_gate[gate].append(dxl.id)
+                    xl_reg_per_gate[gate] = dxl.get_register_config(register)
+
+                elif isinstance(dxl, DynamixelMotor):
                     gate = self.gate4name[name]
                     dxl_ids_per_gate[gate].append(dxl.id)
                     dxl_reg_per_gate[gate] = dxl.get_register_config(register)
-
+                
         for gate, ids in dxl_ids_per_gate.items():
+            addr, num_bytes = dxl_reg_per_gate[gate]
+            gate.protocol.send_dxl_get(addr, num_bytes, ids)
+
+        time.sleep(0.01)
+
+        for gate, ids in xl_reg_per_gate.items():
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
