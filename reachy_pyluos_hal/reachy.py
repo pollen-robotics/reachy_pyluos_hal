@@ -316,6 +316,7 @@ class Reachy(GateProtocol):
         dxl_ids_per_gate: Dict[GateClient, List[int]] = defaultdict(list)
         dxl_reg_per_gate: Dict[GateClient, Tuple[int, int]] = {}
 
+        xl_ids_per_gate = defaultdict(list)
         xl_reg_per_gate = {}
 
         for name in dxl_names:
@@ -326,7 +327,7 @@ class Reachy(GateProtocol):
             if clear_value or (not dxl.is_value_set(register)):
                 if isinstance(dxl, XL320):
                     gate = self.gate4name[name]
-                    xl_reg_per_gate[gate].append(dxl.id)
+                    xl_ids_per_gate[gate].append(dxl.id)
                     xl_reg_per_gate[gate] = dxl.get_register_config(register)
 
                 elif isinstance(dxl, DynamixelMotor):
@@ -340,8 +341,8 @@ class Reachy(GateProtocol):
 
         time.sleep(0.01)
 
-        for gate, ids in xl_reg_per_gate.items():
-            addr, num_bytes = dxl_reg_per_gate[gate]
+        for gate, ids in xl_ids_per_gate.items():
+            addr, num_bytes = xl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
         try:
