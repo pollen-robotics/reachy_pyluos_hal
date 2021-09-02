@@ -339,8 +339,6 @@ class Reachy(GateProtocol):
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
 
-        time.sleep(0.01)
-
         for gate, ids in xl_ids_per_gate.items():
             addr, num_bytes = xl_reg_per_gate[gate]
             gate.protocol.send_dxl_get(addr, num_bytes, ids)
@@ -399,8 +397,6 @@ class Reachy(GateProtocol):
         for gate, value_for_id in dxl_data_per_gate.items():
             addr, num_bytes = dxl_reg_per_gate[gate]
             gate.protocol.send_dxl_set(addr, num_bytes, value_for_id)
-
-        time.sleep(0.01)
 
         for gate, value_for_id in xl_data_per_gate.items():
             addr, num_bytes = xl_rep_per_gate[gate]
