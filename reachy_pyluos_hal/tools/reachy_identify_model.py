@@ -29,8 +29,6 @@ The config possibilities are:
 import os
 import sys
 
-import yaml
-
 from reachy_pyluos_hal.config import get_reachy_config
 
 
@@ -49,7 +47,7 @@ def main():
 
     if config is not None:
         model = config['model']
-        print_model_and_leave(model)       
+        print_model_and_leave(model)
 
     else:
         # Kept only for compatibility, the yaml config file should be prefered!

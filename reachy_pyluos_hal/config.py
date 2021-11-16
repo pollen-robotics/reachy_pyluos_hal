@@ -145,6 +145,7 @@ def orbita_from_config(config: Dict[str, Any]) -> OrbitaActuator:
 
 
 def get_reachy_config() -> Optional[Dict[str, Any]]:
+    """Get full Reachy config (if any)."""
     config_file = os.getenv('REACHY_CONFIG_FILE', default=os.path.expanduser('~/.reachy.yaml'))
 
     if not os.path.exists(config_file):
