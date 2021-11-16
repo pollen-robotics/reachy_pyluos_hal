@@ -1,0 +1,5 @@
+model: full_kit
+
+webrtc:
+    signaling: ouabideep.ddns.net:8080
+    UID: Reachy-default-UID
