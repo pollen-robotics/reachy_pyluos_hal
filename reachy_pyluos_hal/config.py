@@ -1,6 +1,7 @@
 """Module responsible for loading and parsing config files."""
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 
@@ -141,3 +142,14 @@ def dxl_from_config(config: Dict[str, Any]) -> DynamixelMotor:
 def orbita_from_config(config: Dict[str, Any]) -> OrbitaActuator:
     """Create the specific OrbitaActuator described by the config."""
     return OrbitaActuator(id=config['id'])
+
+
+def get_reachy_config() -> Optional[Dict[str, Any]]:
+    config_file = os.getenv('REACHY_CONFIG_FILE', default=os.path.expanduser('~/.reachy.yaml'))
+
+    if not os.path.exists(config_file):
+        return
+
+    with open(config_file) as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+        return config
