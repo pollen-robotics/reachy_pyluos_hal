@@ -29,7 +29,8 @@ The config possibilities are:
 import os
 import sys
 
-import yaml
+from reachy_pyluos_hal.config import get_reachy_config
+
 
 DEFAULT_MODEL = 'full_kit'
 
@@ -42,21 +43,20 @@ def print_model_and_leave(model: str):
 
 def main():
     """Run model identification checks."""
-    model = os.getenv('REACHY_MODEL')
-    if model is not None:
-        print_model_and_leave(model)
+    config = get_reachy_config()
 
-    config_file = os.getenv('REACHY_CONFIG_FILE', default=os.path.expanduser('~/.reachy.yaml'))
-    if not os.path.exists(config_file):
-        print_model_and_leave(DEFAULT_MODEL)
-
-    with open(config_file) as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-        if 'model' not in config:
-            print_model_and_leave(DEFAULT_MODEL)
-
+    if config is not None:
         model = config['model']
         print_model_and_leave(model)
+
+    else:
+        # Kept only for compatibility, the yaml config file should be prefered!
+        model = os.getenv('REACHY_MODEL')
+        if model is not None:
+            print_model_and_leave(model)
+
+        else:
+            print_model_and_leave(DEFAULT_MODEL)
 
 
 if __name__ == '__main__':
