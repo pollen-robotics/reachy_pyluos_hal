@@ -17,7 +17,7 @@ class JointLuos:
 
     def __enter__(self):
         """Enter context handler."""
-        for _ in range(5):
+        while True:
             try:
                 self.reachy = Reachy(config_name=self.config_name, logger=self.logger)
                 self.reachy.__enter__()
