@@ -244,7 +244,7 @@ class Reachy(GateProtocol):
 
                 orbita_values[orbita_name][disk_name] = value
             else:
-                raise ValueError(f'"{name}" is an unknown joints!')
+                self.logger.warning(f'"{name}" is an unknown joints!')
 
         if dxl_values:
             self.set_dxls_value(register, dxl_values)
