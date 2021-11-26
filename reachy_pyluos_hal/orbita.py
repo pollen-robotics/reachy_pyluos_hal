@@ -1,6 +1,5 @@
 """Orbita Actuator abstraction."""
 
-import os
 import pickle
 import struct
 from math import pi
@@ -112,7 +111,8 @@ class OrbitaActuator:
         for disk, z, p in zip(self.disks, zeros, start_pos):
             disk.set_offset(z, p)
 
-    def forward(self, disks):
+    def forward(self, disks: List[float]) -> List[float]:
+        """Use KNN regression to compute an approximate forward kinematics."""
         disks = [d - self.zero_offset for d in disks]
         rpy = self.forward_knn.predict([disks])[0]
 
@@ -125,6 +125,7 @@ class OrbitaActuator:
 
     @property
     def forward_knn(self):
+        """Get the KNN regressor (from sklearn) for the forward kinematics."""
         if not hasattr(OrbitaActuator, '_forward_knn'):
             import reachy_pyluos_hal
             p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-121.pkl'
@@ -132,6 +133,7 @@ class OrbitaActuator:
                 OrbitaActuator._forward_knn = pickle.load(f)
 
         return OrbitaActuator._forward_knn
+
 
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
@@ -161,7 +163,6 @@ class OrbitaDisk:
 
         self.offset: int = 0
         self.zero_offset = self.encoder_position_as_usi(self.position_as_raw(zero_offset))
-
 
     def set_offset(self, raw_zero: int, raw_pos: int):
         """Set the correct offset depending on the hardware zero and the disk starting position."""
