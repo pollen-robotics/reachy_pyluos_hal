@@ -96,13 +96,15 @@ if __name__ == '__main__':
     from glob import glob
 
     if sys.platform == 'linux':
-        port_template = '/dev/ttyUSB*'
+        possible_ports = glob('/dev/ttyUSB*')
     elif sys.platform == 'darwin':
-        port_template = '/dev/tty.usbserial*'
+        possible_ports = glob('/dev/tty.usbserial*')
+    elif sys.platform == 'win32':
+        possible_ports = []  # Add you own COM* here
     else:
         raise SystemError
 
-    for port in glob(port_template):
+    for port in possible_ports:
         print(port)
         print(identify_luos_containers(port))
         print()
