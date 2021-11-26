@@ -3,8 +3,8 @@ head:
     orbita_actuator:
       id: 40
       R0: 
-        - z: 60
-        - y: 10
+        z: 60
+        y: 10
       zero_offset: -60
   neck_fan:
     fan:
