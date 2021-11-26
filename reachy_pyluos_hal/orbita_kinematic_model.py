@@ -68,7 +68,7 @@ class OrbitaKinematicModel(object):
         """Get the KNN regressor (from sklearn) for the forward kinematics."""
         if not hasattr(OrbitaKinematicModel, '_forward_knn'):
             import reachy_pyluos_hal
-            p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-121.pkl'
+            p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-61.pkl'
             with open(p, 'rb') as f:
                 OrbitaKinematicModel._forward_knn = pickle.load(f)
 
