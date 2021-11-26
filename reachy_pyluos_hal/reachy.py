@@ -143,7 +143,7 @@ class Reachy(GateProtocol):
             zero = [int(x) for x in self.get_orbita_values('zero', name, clear_value=True, retry=10)]
             pos = [int(x) for x in self.get_orbita_values('absolute_position', name, clear_value=True, retry=10)]
             orbita.set_offset(zero, pos)
-            self.set_orbita_values('recalibrate', name, {'disk_top': True})
+            self.set_orbita_values('recalibrate', name, {'roll': True})
 
     def get_all_joints_names(self) -> List[str]:
         """Return the names of all joints."""
@@ -151,8 +151,8 @@ class Reachy(GateProtocol):
         orbita_disk_names = []
 
         for name, orbita in self.orbitas.items():
-            for disk_name in orbita.get_joints_name():
-                orbita_disk_names.append(f'{name}_{disk_name}')
+            for axis_name in orbita.get_joints_name():
+                orbita_disk_names.append(f'{name}_{axis_name}')
 
         return dxl_names + orbita_disk_names
 
@@ -237,7 +237,7 @@ class Reachy(GateProtocol):
                 dxl_values[name] = value
 
             elif orbita_name in self.orbitas:
-                if disk_name not in self.orbitas[orbita_name].get_disks_name():
+                if disk_name not in self.orbitas[orbita_name].get_joints_name():
                     continue
 
                 if orbita_name not in orbita_values:
@@ -409,11 +409,44 @@ class Reachy(GateProtocol):
                 time.sleep(1)
             return self.get_orbita_values(register_name, orbita_name, clear_value, retry - 1)
 
-    def set_orbita_values(self, register_name: str, orbita_name: str, value_for_disks: Dict[str, float]):
+    def set_orbita_values(self, register_name: str, orbita_name: str, value_for_rpys: Dict[str, float]):
         """Set new value for register on the specified disks."""
         orbita = self.orbitas[orbita_name]
         register = OrbitaActuator.register_address[register_name]
         gate = self.gate4name[orbita_name]
+
+        axis2disk = {
+            'roll': 'disk_top',
+            'pitch': 'disk_middle',
+            'yaw': 'disk_bottom',
+        }
+
+        if register_name in ('present_position', 'goal_position'):
+            axes = axis2disk.keys()
+
+            angles = self.get_joints_value(
+                register='present_position',
+                joint_names=[f'{orbita_name}_{axis}' for axis in axes],
+            )
+            rpys = {axis: a for axis, a in zip(axes, angles)}
+
+            goal_rpys = {
+                axis: pos for axis, pos in value_for_rpys.items()
+                if axis in axes
+            }
+            rpys.update(goal_rpys)
+
+            pos = orbita.inverse(tuple(rpys.values()))
+            value_for_disks = {
+                disk: value
+                for disk, value in zip(orbita.get_disks_name(), pos)
+            }
+
+        else:
+            value_for_disks = {
+                axis2disk[axis]: value
+                for axis, value in value_for_rpys.items()
+            }
 
         for disk_name, value in value_for_disks.items():
             attrgetter(f'{disk_name}.{register_name}')(orbita).update_using_usi(value)

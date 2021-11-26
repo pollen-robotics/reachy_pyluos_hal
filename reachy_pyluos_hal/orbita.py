@@ -1,16 +1,15 @@
 """Orbita Actuator abstraction."""
 
-import pickle
 import struct
 from math import pi
 from enum import Enum
 from logging import Logger
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+from .orbita_kinematic_model import OrbitaKinematicModel
 from .register import Register
 
 
@@ -67,6 +66,8 @@ class OrbitaActuator:
 
         self.logger: Optional[Logger] = None
 
+        self.kin_model = OrbitaKinematicModel(R0=R0)
+
     def __str__(self) -> str:
         """Get Orbita Actuator string representation."""
         return f'<OrbitaActuator id={self.id}>'
@@ -111,28 +112,23 @@ class OrbitaActuator:
         for disk, z, p in zip(self.disks, zeros, start_pos):
             disk.set_offset(z, p)
 
-    def forward(self, disks: List[float]) -> List[float]:
+    def forward(self, disks: Tuple[float, float, float]) -> Tuple[float, float, float]:
         """Use KNN regression to compute an approximate forward kinematics."""
         disks = [d - self.zero_offset for d in disks]
-        rpy = self.forward_knn.predict([disks])[0]
 
-        M1 = R.from_euler('xyz', rpy).as_matrix()
-        M = np.dot(M1, self.R0)
-        rpy = R.from_matrix(M).as_euler('xyz')
+        q = self.kin_model.forward_kinematics(disks)
+        rpy = R.from_quat(q).as_euler('xyz')
+
         rpy[2] += self.zero_offset
 
         return rpy
 
-    @property
-    def forward_knn(self):
-        """Get the KNN regressor (from sklearn) for the forward kinematics."""
-        if not hasattr(OrbitaActuator, '_forward_knn'):
-            import reachy_pyluos_hal
-            p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-121.pkl'
-            with open(p, 'rb') as f:
-                OrbitaActuator._forward_knn = pickle.load(f)
+    def inverse(self, roll_pitch_yaw: Tuple[float, float, float]) -> Tuple[float, float, float]:
+        """Compute analytical IK from roll, pitch, yaw and return the disk position (in radians)."""
+        q = R.from_euler('xyz', roll_pitch_yaw).as_quat()
+        disks = self.kin_model.inverse_kinematics(q)
 
-        return OrbitaActuator._forward_knn
+        return disks
 
 
 class OrbitaDisk:
