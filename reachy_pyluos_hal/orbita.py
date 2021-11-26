@@ -1,12 +1,16 @@
 """Orbita Actuator abstraction."""
 
+import os
+import pickle
 import struct
 from math import pi
 from enum import Enum
 from logging import Logger
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 from .register import Register
 
@@ -50,14 +54,17 @@ class OrbitaActuator:
     reduction = 52 / 24
     resolution = 4096
 
-    def __init__(self, id: int) -> None:
+    def __init__(self, id: int, R0: np.ndarray, zero_offset: float) -> None:
         """Create 3 disks (bottom, middle, top) with their registers."""
         self.id = id
 
-        self.disk_bottom = OrbitaDisk('disk_bottom', self.resolution, self.reduction)
-        self.disk_middle = OrbitaDisk('disk_middle', self.resolution, self.reduction)
-        self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction)
+        self.disk_bottom = OrbitaDisk('disk_bottom', self.resolution, self.reduction, zero_offset)
+        self.disk_middle = OrbitaDisk('disk_middle', self.resolution, self.reduction, zero_offset)
+        self.disk_top = OrbitaDisk('disk_top', self.resolution, self.reduction, zero_offset)
         self.disks = [self.disk_top, self.disk_middle, self.disk_bottom]
+
+        self.R0 = R0
+        self.zero_offset = zero_offset
 
         self.logger: Optional[Logger] = None
 
@@ -71,7 +78,7 @@ class OrbitaActuator:
 
     def get_joints_name(self) -> List[str]:
         """Get the name of each joint (disk + fake RPY joint)."""
-        return self.get_disks_name() + ['roll', 'pitch', 'yaw']
+        return ['roll', 'pitch', 'yaw']
 
     def get_id_for_disk(self, disk_name: str) -> int:
         """Get the index for a specified disk."""
@@ -105,11 +112,31 @@ class OrbitaActuator:
         for disk, z, p in zip(self.disks, zeros, start_pos):
             disk.set_offset(z, p)
 
+    def forward(self, disks):
+        disks = [d - self.zero_offset for d in disks]
+        rpy = self.forward_knn.predict([disks])[0]
+
+        M1 = R.from_euler('xyz', rpy).as_matrix()
+        M = np.dot(M1, self.R0)
+        rpy = R.from_matrix(M).as_euler('xyz')
+        rpy[2] += self.zero_offset
+
+        return rpy
+
+    @property
+    def forward_knn(self):
+        if not hasattr(OrbitaActuator, '_forward_knn'):
+            import reachy_pyluos_hal
+            p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-121.pkl'
+            with open(p, 'rb') as f:
+                OrbitaActuator._forward_knn = pickle.load(f)
+
+        return OrbitaActuator._forward_knn
 
 class OrbitaDisk:
     """Single Orbita disk abstraction."""
 
-    def __init__(self, name: str, resolution: int, reduction: float) -> None:
+    def __init__(self, name: str, resolution: int, reduction: float, zero_offset: float) -> None:
         """Create all Orbita Register."""
         self.name = name
 
@@ -133,6 +160,8 @@ class OrbitaDisk:
         self.reduction = reduction
 
         self.offset: int = 0
+        self.zero_offset = self.encoder_position_as_usi(self.position_as_raw(zero_offset))
+
 
     def set_offset(self, raw_zero: int, raw_pos: int):
         """Set the correct offset depending on the hardware zero and the disk starting position."""
@@ -144,7 +173,7 @@ class OrbitaDisk:
         distances = [abs(raw_pos - poss) for poss in possibilities]
         closest = np.argmin(distances)
         self.offset = 0
-        self.offset = possibilities[closest] + self.encoder_position_as_usi(self.position_as_raw(np.deg2rad(60)))
+        self.offset = possibilities[closest] - self.zero_offset
 
     def encoder_position_as_raw(self, val: int) -> bytes:
         """Convert encoder value to raw."""

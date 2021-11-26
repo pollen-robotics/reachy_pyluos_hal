@@ -171,18 +171,21 @@ class Reachy(GateProtocol):
                 orbita_name = name.partition('_')[0]
                 if orbita_name in self.orbitas:
                     orbita = self.orbitas[orbita_name]
-                    for disk in orbita.get_joints_name():
-                        orbitas_values[f'{orbita_name}_{disk}'] = 0.0
+                    for joint in orbita.get_joints_name():
+                        orbitas_values[f'{orbita_name}_{joint}'] = 0.0
         else:
             for name in joint_names:
                 orbita_name = name.partition('_')[0]
                 if orbita_name in self.orbitas:
                     disk_values = self.get_orbita_values(register, orbita_name, clear_value, retry)
-                    for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), disk_values):
-                        orbitas_values[f'{orbita_name}_{disk}'] = val
-                    orbitas_values[f'{orbita_name}_roll'] = 0.0
-                    orbitas_values[f'{orbita_name}_pitch'] = 0.0
-                    orbitas_values[f'{orbita_name}_yaw'] = 0.0
+                    if register in ('present_position', 'goal_position'):
+                        values = self.orbitas[orbita_name].forward(disk_values)
+                    else:
+                        values = disk_values
+
+                    orbitas_values[f'{orbita_name}_roll'] = values[0]
+                    orbitas_values[f'{orbita_name}_pitch'] = values[1]
+                    orbitas_values[f'{orbita_name}_yaw'] = values[2]
 
         values = {}
         values.update(dxl_values)
@@ -216,11 +219,9 @@ class Reachy(GateProtocol):
             orbita_name = name.partition('_')[0]
             if orbita_name in self.orbitas:
                 orbita_pids = self.get_orbita_values('pid', orbita_name, clear_value=True, retry=retry)
-                for disk, val in zip(self.orbitas[orbita_name].get_disks_name(), orbita_pids):
-                    pids[f'{orbita_name}_{disk}'] = list(val)
-                pids[f'{orbita_name}_roll'] = [0.0, 0.0, 0.0]
-                pids[f'{orbita_name}_pitch'] = [0.0, 0.0, 0.0]
-                pids[f'{orbita_name}_yaw'] = [0.0, 0.0, 0.0]
+                pids[f'{orbita_name}_roll'] = orbita_pids[0]
+                pids[f'{orbita_name}_pitch'] = orbita_pids[1]
+                pids[f'{orbita_name}_yaw'] = orbita_pids[2]
 
         return [pids[name] for name in joint_names]
 
