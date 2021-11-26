@@ -11,8 +11,10 @@ setup(
 
     install_requires=[
         'numpy',
+        'pyquaternion',
         'pyserial',
         'PyYAML',
+        'scipy',
         'sklearn',
     ],
 
