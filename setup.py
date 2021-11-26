@@ -13,6 +13,7 @@ setup(
         'numpy',
         'pyserial',
         'PyYAML',
+        'sklearn',
     ],
 
     package_data={'': ['config/*.yaml']},
