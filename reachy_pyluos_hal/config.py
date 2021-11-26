@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import yaml
+
+from scipy.spatial.transform import Rotation
 
 from .device import Device
 from .dynamixel import DynamixelMotor, MX106, MX64, MX28, AX18, XL320
@@ -141,7 +144,18 @@ def dxl_from_config(config: Dict[str, Any]) -> DynamixelMotor:
 
 def orbita_from_config(config: Dict[str, Any]) -> OrbitaActuator:
     """Create the specific OrbitaActuator described by the config."""
-    return OrbitaActuator(id=config['id'])
+    if 'R0' in config:
+        R0 = np.eye(3)
+        axes = config['R0']
+        for axis, val in axes.items():
+            M = Rotation.from_euler(axis, np.deg2rad(val)).as_matrix()
+            R0 = np.dot(R0, M)
+    else:
+        R0 = np.eye(3)
+
+    zero_offset = np.deg2rad(config.get('zero_offset', 0))
+
+    return OrbitaActuator(id=config['id'], R0=R0, zero_offset=zero_offset)
 
 
 def get_reachy_config() -> Optional[Dict[str, Any]]:
