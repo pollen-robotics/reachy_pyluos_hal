@@ -2,28 +2,10 @@ head:
   neck:
     orbita_actuator:
       id: 40
-      R0: 
+      R0:
         z: 60
         y: 10
       zero_offset: -60
   neck_fan:
     fan:
       id: 40
-  l_antenna:
-    dxl_motor:
-      type: XL-320
-      id: 30
-      cw_angle_limit: -2.62
-      ccw_angle_limit: 2.62
-  l_antenna_fan:
-    fan:
-      id: 30
-  r_antenna:
-    dxl_motor:
-      type: XL-320
-      id: 31
-      cw_angle_limit: -2.62
-      ccw_angle_limit: 2.62
-  r_antenna_fan:
-    fan:
-      id: 31
