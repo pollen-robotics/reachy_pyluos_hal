@@ -2,6 +2,7 @@
 
 import sys
 import time
+import numpy as np
 
 from collections import OrderedDict, defaultdict
 from glob import glob
@@ -79,11 +80,26 @@ class Reachy(GateProtocol):
         if len(self.ports) == 0:
             raise IOError(f'No Gate found on "{self.port_template}"')
 
+        missing_parts_cards = {}
+
+        first_piece_to_part = {
+            "l_shoulder_pitch": "left_arm",
+            "r_shoulder_pitch": "right_arm",
+            "neck": "head",
+        }
+
         for devices in self.config:
             self.logger.info(f'Looking for {list(devices.keys())} on {self.ports}.')
             port, matching, missing = find_gate(devices, self.ports, self.logger)
+
+            missing_containers = [{container.__module__: container.id} for container in missing]
+
+            first_piece = list(devices.keys())[0]
+            missing_parts_cards[first_piece_to_part[first_piece]] = missing_containers
+
             if len(missing) > 0:
-                raise MissingContainerError(missing)
+                self.logger.warning(f'Could not find {missing} on {port}')
+                continue
 
             self.logger.info(f'Found devices on="{port}", connecting...')
 
@@ -115,6 +131,9 @@ class Reachy(GateProtocol):
                     self.fan4id[dev.id] = dev
 
                 dev.logger = self.logger
+
+        if not np.array_equal(np.asarray(list(missing_parts_cards.values())).flatten(), np.array([])):
+            raise MissingContainerError(missing_parts_cards)
 
     def __enter__(self):
         """Enter context handler."""
