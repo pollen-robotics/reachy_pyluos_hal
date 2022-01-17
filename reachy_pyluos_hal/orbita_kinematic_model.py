@@ -8,6 +8,9 @@ import numpy as np
 from pyquaternion import Quaternion
 from numpy import linalg as LA
 from scipy.spatial.transform import Rotation as R
+from reachy_pyluos_hal.orbita_fk import OrbitaFK
+
+import pickle
 
 
 def rot(axis, deg):
@@ -49,30 +52,36 @@ class OrbitaKinematicModel(object):
         self.last_angles = np.array([0, 2 * np.pi / 3, -2 * np.pi / 3])
         self.offset = np.array([0, 0, 0])
 
+        self.orbita_fk = OrbitaFK(yaw_offset=-np.radians(60))
+
+        import reachy_pyluos_hal
+        path_model = Path(reachy_pyluos_hal.__file__).parent / 'mlpreg.obj'
+
+        with open(path_model, 'rb') as f:
+            self.model = pickle.load(f)
+
     def inverse_kinematics(self, q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
         """Compute analytical IK from roll, pitch, yaw and return the disk position (in radians)."""
         return np.deg2rad(self.get_angles_from_quaternion(q[3], q[0], q[1], q[2]))
 
     def forward_kinematics(self, disks: Tuple[float, float, float]) -> Tuple[float, float, float, float]:
         """Use KNN regression to compute an approximate forward kinematics given the disk position (in radians)."""
-        rpy = self.forward_knn.predict([disks])[0]
-
-        M1 = R.from_euler('xyz', rpy).as_matrix()
+        rpy = self.model.predict(np.array(disks).reshape(1, -1))
+        M1 = R.from_euler('XYZ', rpy).as_matrix()
         M = np.dot(M1, self.R0)
         q = R.from_matrix(M).as_quat()
-
         return q
 
-    @property
-    def forward_knn(self):
-        """Get the KNN regressor (from sklearn) for the forward kinematics."""
-        if not hasattr(OrbitaKinematicModel, '_forward_knn'):
-            import reachy_pyluos_hal
-            p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-61.pkl'
-            with open(p, 'rb') as f:
-                OrbitaKinematicModel._forward_knn = pickle.load(f)
+    # @property
+    # def forward_knn(self):
+    #     """Get the KNN regressor (from sklearn) for the forward kinematics."""
+    #     if not hasattr(OrbitaKinematicModel, '_forward_knn'):
+    #         import reachy_pyluos_hal
+    #         p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-91.pkl'
+    #         with open(p, 'rb') as f:
+    #             OrbitaKinematicModel._forward_knn = pickle.load(f)
 
-        return OrbitaKinematicModel._forward_knn
+    #     return OrbitaKinematicModel._forward_knn
 
     def get_new_frame_from_vector(self, vector: np.ndarray, angle: float = 0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
