@@ -8,7 +8,7 @@ import numpy as np
 from pyquaternion import Quaternion
 from numpy import linalg as LA
 from scipy.spatial.transform import Rotation as R
-from reachy_pyluos_hal.orbita_fk import OrbitaFK
+# from reachy_pyluos_hal.orbita_fk import OrbitaFK
 
 
 def rot(axis, deg):
@@ -50,7 +50,7 @@ class OrbitaKinematicModel(object):
         self.last_angles = np.array([0, 2 * np.pi / 3, -2 * np.pi / 3])
         self.offset = np.array([0, 0, 0])
 
-        self.orbita_fk = OrbitaFK(yaw_offset=-np.radians(60))
+        # self.orbita_fk = OrbitaFK(yaw_offset=-np.radians(60))
 
         import reachy_pyluos_hal
         path_model = Path(reachy_pyluos_hal.__file__).parent / 'mlpreg.obj'
