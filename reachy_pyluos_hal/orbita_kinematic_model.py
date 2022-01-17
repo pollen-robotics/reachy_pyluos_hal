@@ -10,8 +10,6 @@ from numpy import linalg as LA
 from scipy.spatial.transform import Rotation as R
 from reachy_pyluos_hal.orbita_fk import OrbitaFK
 
-import pickle
-
 
 def rot(axis, deg):
     """Compute 3D rotation matrix given euler rotation."""

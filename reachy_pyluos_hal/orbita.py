@@ -122,7 +122,7 @@ class OrbitaActuator:
         rpy.ravel()[2] += self.zero_offset
         # rpy[2] += self.zero_offset
 
-        rpy = R.from_euler('xyz',rpy).as_euler('XYZ')
+        rpy = R.from_euler('xyz', rpy).as_euler('XYZ')
 
         return rpy.ravel()
         # return rpy
