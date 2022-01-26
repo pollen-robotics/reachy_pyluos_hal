@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+from numpy import linalg as LA
 
 from pyquaternion import Quaternion
-from numpy import linalg as LA
+
 from scipy.spatial.transform import Rotation as R
-# from reachy_pyluos_hal.orbita_fk import OrbitaFK
 
 
 def rot(axis, deg):
@@ -50,8 +50,6 @@ class OrbitaKinematicModel(object):
         self.last_angles = np.array([0, 2 * np.pi / 3, -2 * np.pi / 3])
         self.offset = np.array([0, 0, 0])
 
-        # self.orbita_fk = OrbitaFK(yaw_offset=-np.radians(60))
-
         import reachy_pyluos_hal
         path_model = Path(reachy_pyluos_hal.__file__).parent / 'mlpreg.obj'
 
@@ -69,17 +67,6 @@ class OrbitaKinematicModel(object):
         M = np.dot(M1, self.R0)
         q = R.from_matrix(M).as_quat()
         return q
-
-    # @property
-    # def forward_knn(self):
-    #     """Get the KNN regressor (from sklearn) for the forward kinematics."""
-    #     if not hasattr(OrbitaKinematicModel, '_forward_knn'):
-    #         import reachy_pyluos_hal
-    #         p = Path(reachy_pyluos_hal.__file__).parent / 'forward-knn-91.pkl'
-    #         with open(p, 'rb') as f:
-    #             OrbitaKinematicModel._forward_knn = pickle.load(f)
-
-    #     return OrbitaKinematicModel._forward_knn
 
     def get_new_frame_from_vector(self, vector: np.ndarray, angle: float = 0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
