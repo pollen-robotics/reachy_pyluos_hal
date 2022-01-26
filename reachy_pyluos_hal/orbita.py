@@ -120,12 +120,10 @@ class OrbitaActuator:
         rpy = R.from_quat(q).as_euler('xyz')
 
         rpy.ravel()[2] += self.zero_offset
-        # rpy[2] += self.zero_offset
 
         rpy = R.from_euler('xyz', rpy).as_euler('XYZ')
 
         return rpy.ravel()
-        # return rpy
 
     def inverse(self, roll_pitch_yaw: Tuple[float, float, float]) -> Tuple[float, float, float]:
         """Compute analytical IK from roll, pitch, yaw and return the disk position (in radians)."""
