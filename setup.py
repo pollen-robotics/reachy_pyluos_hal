@@ -11,8 +11,11 @@ setup(
 
     install_requires=[
         'numpy',
+        'pyquaternion',
         'pyserial',
         'PyYAML',
+        'scipy',
+        'sklearn',
     ],
 
     package_data={'': ['config/*.yaml']},
