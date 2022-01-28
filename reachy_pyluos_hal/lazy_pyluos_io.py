@@ -50,7 +50,6 @@ class LazyPyluosIO(JointLuos):
 
         ok = JointLuos.set_compliance(self, diff_compliancies)
         if ok:
-            print(diff_compliancies)
             self._compliancies.update(diff_compliancies)
         return ok
 
@@ -74,9 +73,10 @@ class LazyPyluosIO(JointLuos):
         if not needed_goal_positions:
             return True
 
-        self._goal_pos.update(needed_goal_positions)
-
-        return JointLuos.set_goal_positions(self, needed_goal_positions)
+        ok = JointLuos.set_goal_positions(self, needed_goal_positions)
+        if ok:
+            self._goal_pos.update(needed_goal_positions)
+        return ok
 
     def get_joint_pids(self, names: List[str]) -> List[Tuple[float, float, float]]:
         return [self._pids[n] for n in names]
@@ -86,3 +86,19 @@ class LazyPyluosIO(JointLuos):
             tuple(pids) if len(pids) == 4 else tuple(list(pids) + [float('nan')])
             for pids in self.get_joint_pids(names)
         ]
+
+    def set_goal_pids(self, goal_pids: Dict[str, Tuple[float, float, float]]) -> bool:
+        diff_pids = {
+            k: pid
+            for k, pid in goal_pids.items()
+            if self._pids[k] != pid
+        }
+        if not diff_pids:
+            return True
+
+        ok = JointLuos.set_goal_pids(self, diff_pids)
+
+        if ok:
+            self._pids.update(diff_pids)
+
+        return ok
