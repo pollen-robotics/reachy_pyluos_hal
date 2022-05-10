@@ -53,14 +53,14 @@ left_arm_advanced:
       ccw_angle_limit: 0.79
   l_wrist_roll:
     dxl_motor:
-      type: AX-18
+      type: MX-28
       id: 26
       direct: False
       cw_angle_limit: -0.61
       ccw_angle_limit: 0.95
   l_gripper:
     dxl_motor:
-      type: AX-18
+      type: MX-28
       id: 27
       cw_angle_limit: -1.70
       ccw_angle_limit: 0.90
