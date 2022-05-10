@@ -541,7 +541,7 @@ class Reachy(GateProtocol):
         """Handle load update received on a gate client."""
         for id, val in zip(ids, values):
             if id not in self.force4id and self.logger is not None:
-                self.logger.info(f'Force sensor id={id} not in config!')
+                # self.logger.info(f'Force sensor id={id} not in config!')
                 continue
             self.force4id[id].update_force(val)
 
