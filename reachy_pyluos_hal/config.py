@@ -35,6 +35,9 @@ def load_config(config_name: str) -> List[Dict[str, Device]]:
 
         'orbita': ['orbita'],
         'mini': ['head'],
+
+        'no_head': ['left_arm', 'right_arm'],
+        'no_head_advanced': ['left_arm_advanced', 'right_arm_advanced'],
     }
 
     devices = []
