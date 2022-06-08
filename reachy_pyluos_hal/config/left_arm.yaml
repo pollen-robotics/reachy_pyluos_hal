@@ -65,6 +65,3 @@ left_arm:
       cw_angle_limit: -1.70
       ccw_angle_limit: 0.90
       reduction: -2
-  l_force_gripper:
-    force_sensor:
-      id: 20
