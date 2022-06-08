@@ -96,7 +96,7 @@ if __name__ == '__main__':
     from glob import glob
 
     if sys.platform == 'linux':
-        port_template = '/dev/ttyUSB*'
+        port_template = '/dev/gate*'
     elif sys.platform == 'darwin':
         port_template = '/dev/tty.usbserial*'
     else:
