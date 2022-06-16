@@ -25,6 +25,7 @@ setup(
             'dynamixel-config=reachy_pyluos_hal.tools.dynamixel_config:main',
             'reachy-dynamixel-config=reachy_pyluos_hal.tools.reachy_dynamixel_config:main',
             'reachy-identify-model=reachy_pyluos_hal.tools.reachy_identify_model:main',
+            'reachy-identify-zuuu-model=reachy_pyluos_hal.tools.reachy_identify_model:zuuu_config',
         ],
     },
 

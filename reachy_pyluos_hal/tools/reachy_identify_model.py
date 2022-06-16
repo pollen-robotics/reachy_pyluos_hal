@@ -33,12 +33,24 @@ from reachy_pyluos_hal.config import get_reachy_config
 
 
 DEFAULT_MODEL = 'full_kit'
+DEFAULT_ZUUU_MODEL = 'None'
 
 
 def print_model_and_leave(model: str):
     """Print the model found on stdout and exit."""
     print(model)
     sys.exit(0)
+
+
+def zuuu_config():
+    """Run model identification checks on the mobile base"""
+    config = get_reachy_config()
+
+    if config is not None and 'zuuu_model' in config:
+        model = config['zuuu_model']
+        print_model_and_leave(model)
+    else:
+        print_model_and_leave(DEFAULT_ZUUU_MODEL)
 
 
 def main():
@@ -61,3 +73,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    zuuu_config()
