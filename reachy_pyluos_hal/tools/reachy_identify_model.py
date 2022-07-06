@@ -43,7 +43,7 @@ def print_model_and_leave(model: str):
 
 
 def zuuu_config():
-    """Run model identification checks on the mobile base"""
+    """Run model identification checks on the mobile base."""
     config = get_reachy_config()
 
     if config is not None and 'zuuu_model' in config:
