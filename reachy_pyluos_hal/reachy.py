@@ -26,7 +26,7 @@ class Reachy(GateProtocol):
     """Reachy wrapper around serial GateClients which handle the communication with the hardware."""
 
     if sys.platform == 'linux':
-        if glob('/dev/gate*') == []:
+        if len(glob('/dev/gate*')) == 0:
             port_template: str = '/dev/ttyUSB*'
         else:
             port_template: str = '/dev/gate*'
