@@ -119,7 +119,7 @@ class OrbitaActuator:
         q = self.kin_model.forward_kinematics(disks)
         rpy = R.from_quat(q).as_euler('xyz')
 
-        rpy.ravel()[2] += self.zero_offset
+        rpy[0, 2] = rpy.ravel()[2] + self.zero_offset
 
         rpy = R.from_euler('xyz', rpy).as_euler('XYZ')
 
