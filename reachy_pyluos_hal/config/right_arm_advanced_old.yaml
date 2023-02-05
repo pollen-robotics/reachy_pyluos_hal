@@ -9,7 +9,7 @@ right_arm_advanced:
       offset: 1.57
       direct: False
       cw_angle_limit: -3.14
-      ccw_angle_limit: 1.95
+      ccw_angle_limit: 1.05
   r_shoulder_roll:
     dxl_motor:
       type: MX-106
@@ -17,7 +17,7 @@ right_arm_advanced:
       offset: 1.57
       direct: False
       cw_angle_limit: -1.75
-      ccw_angle_limit: 1.67
+      ccw_angle_limit: 1.57
   r_arm_yaw:
     dxl_motor:
       type: MX-64
@@ -50,15 +50,15 @@ right_arm_advanced:
       type: MX-28
       id: 15
       direct: False
-      cw_angle_limit: -1.06
-      ccw_angle_limit: 1.17
+      cw_angle_limit: -0.79
+      ccw_angle_limit: 0.79
   r_wrist_roll:
     dxl_motor:
       type: AX-18
       id: 16
       direct: False
-      cw_angle_limit: -1.20
-      ccw_angle_limit: 0.57
+      cw_angle_limit: -0.95
+      ccw_angle_limit: 0.61
   r_gripper:
     dxl_motor:
       type: AX-18
